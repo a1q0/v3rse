@@ -22,6 +22,8 @@
 
 #include "VK_DFL.h"
 
+#include "../../Logging.h"
+
 struct QueueFamilyIndices {
     std::optional<uint32_t> graphicsFamily;
     std::optional<uint32_t> presentFamily;
@@ -39,24 +41,51 @@ struct SurfaceDetails {
 
 
 namespace VK {
-    VkDebugUtilsMessengerCreateInfoEXT vkDefaultDebugUtilsMessengerCreateInfoEXT{};
+    VkDebugUtilsMessengerEXT vkDebugUtilsMessengerEXT;
 
-    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallbackDefault(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
-    static VKAPI_ATTR VkBool32 VKAPI_CALL (*debugCallback)(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) = debugCallbackDefault;
+    inline bool supportsLayers(vector<const char*> layers);
 
 
-    VkBool32 debugCallbackDefault(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType,
-                                      const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData) {
+    VkBool32 debugCallbackDefault(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+                                  VkDebugUtilsMessageTypeFlagsEXT messageType,
+                                  const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
+                                  void *pUserData) {
         std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
-
         return VK_FALSE;
     }
 
-    bool supportsLayers(vector<const char *> vector1);
+    VkBool32 (*debugCallback)(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+            VkDebugUtilsMessageTypeFlagsEXT messageType,
+            const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+            void* pUserData) = debugCallbackDefault;
 
-    inline VkInstance createInstance(vector<const char*> extensions, vector<const char*> layers = vector<const char*>(0),
+    VkDebugUtilsMessengerCreateInfoEXT vkDefaultDebugUtilsMessengerCreateInfoEXT = {
+            .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
+            .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
+            .messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
+            .pfnUserCallback = debugCallback,
+    };
+
+    inline bool createDebugMessenger(VkInstance vkInstance,
+                                     VkDebugUtilsMessengerCreateInfoEXT vkDebugUtilsMessengerCreateInfoEXT = vkDefaultDebugUtilsMessengerCreateInfoEXT) {
+        return CreateDebugUtilsMessengerEXT(vkInstance, &vkDebugUtilsMessengerCreateInfoEXT, nullptr, &vkDebugUtilsMessengerEXT);
+    }
+
+    inline bool deleteDebugMessenger(VkInstance vkInstance) {
+        DestroyDebugUtilsMessengerEXT(vkInstance, vkDebugUtilsMessengerEXT, nullptr);
+    }
+
+    // "VK_KHR_SWAPCHAIN_EXTENSION_NAME"
+    inline VkInstance createInstance(vector<const char*> extensions = { },
+                                     vector<const char*> layers = { "VK_LAYER_KHRONOS_validation" },
                                      const char* appName = "",
                                      VkDebugUtilsMessengerCreateInfoEXT vkDebugUtilsMessengerCreateInfoEXT = vkDefaultDebugUtilsMessengerCreateInfoEXT) {
+
+        uint32_t glfwExtensionCount = 0;
+        const char** glfwExtensions;
+        glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+
+        extensions.insert(extensions.end(), glfwExtensions, glfwExtensions + glfwExtensionCount);
 
         VkInstanceCreateInfo vkInstanceCreateInfo{};
         vkInstanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -73,7 +102,6 @@ namespace VK {
         vkInstanceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
         vkInstanceCreateInfo.ppEnabledExtensionNames = extensions.data();
 
-        VkDebugUtilsMessengerCreateInfoEXT createInfo{};
         if (layers.size() != 0) {
             if (!supportsLayers(layers)) {
                 throw std::runtime_error("requested layers not available!");
@@ -82,12 +110,7 @@ namespace VK {
             vkInstanceCreateInfo.enabledLayerCount = static_cast<uint32_t>(layers.size());
             vkInstanceCreateInfo.ppEnabledLayerNames = layers.data();
 
-            createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-            createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-            createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-            createInfo.pfnUserCallback = debugCallback;
-
-            createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*) &createInfo;
+            vkInstanceCreateInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*) &vkDebugUtilsMessengerCreateInfoEXT;
         } else {
             vkInstanceCreateInfo.enabledLayerCount = 0;
         }
@@ -178,21 +201,12 @@ namespace VK {
 
         int i = 0;
         for (const auto& queueFamily : vkQueueFamilyProperties) {
-            if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-                indices.graphicsFamily = i;
-            }
-
             VkBool32 presentSupport = false;
             vkGetPhysicalDeviceSurfaceSupportKHR(vkPhysicalDevice, i, vkSurface, &presentSupport);
 
-            if (presentSupport) {
-                indices.presentFamily = i;
-            }
-
-            if (indices.isComplete()) {
-                break;
-            }
-
+            if (presentSupport) indices.presentFamily = i;
+            if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) indices.graphicsFamily = i;
+            if (indices.isComplete()) break;
             i++;
         }
 

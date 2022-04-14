@@ -6,8 +6,7 @@
 GLFWwindow *RenderEngine::window = nullptr;
 
 void RenderEngine::init() {
-    VK::createInstance("", {""}, true);
-    VK::setDebugCallback();
+    VK::createInstance();
 }
 
 void RenderEngine::loop() {
@@ -16,7 +15,7 @@ void RenderEngine::loop() {
         frame();
     }
 
-    vkDeviceWaitIdle(vkDevice);
+//    vkDeviceWaitIdle(vkDevice);
 }
 
 void RenderEngine::frame() {
