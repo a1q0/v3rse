@@ -15,3 +15,5 @@
 #else
 #    include "spdlog/fmt/bundled/format.h"
 #endif
+
+using spdlog::info;

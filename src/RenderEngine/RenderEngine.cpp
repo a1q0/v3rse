@@ -6,13 +6,24 @@
 #include <chrono>
 
 VkInstance instance = nullptr;
+VkSurfaceKHR surface = nullptr;
+VkPhysicalDevice physicalDevice = nullptr;
+VkDevice device = nullptr;
+VkSwapchainKHR  swapchain = nullptr;
 GLFWwindow* window = nullptr;
 
+uint32_t width = 480;
+uint32_t height = 480;
+
 void RenderEngine::init() {
-    window_create(480, 480, "v3rse");
+    window_create(width, height, "v3rse");
     instance = VK::createInstance();
     VK::createDebugMessenger(instance);
-    VK::createSurface(instance, window);
+    surface = VK::createSurface(instance, window);
+    physicalDevice = VK::getBestPhysicalDevice(instance, surface);
+    QueueFamilyIndices queueFamilyIndices = VK::getQueueFamilyIndices(physicalDevice, surface);
+    device = VK::createLogicalDevice(physicalDevice, VK::getQueueCreateInfos(queueFamilyIndices));
+    swapchain = VK::createSwapchain(physicalDevice, device, surface, width, height);
 }
 
 void RenderEngine::loop() {

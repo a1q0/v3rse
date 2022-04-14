@@ -57,11 +57,11 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT
 }
 
 struct QueueFamilyIndices {
-    std::optional<uint32_t> graphicsFamily;
-    std::optional<uint32_t> presentFamily;
+    std::optional<uint32_t> graphics;
+    std::optional<uint32_t> present;
 
     bool isComplete() {
-        return graphicsFamily.has_value() && presentFamily.has_value();
+        return graphics.has_value() && present.has_value();
     }
 };
 
@@ -294,18 +294,6 @@ public:
   void createLogicalDevice() {
         QueueFamilyIndices indices = findQueueFamilies(vkPhysicalDevice);
 
-        std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-        std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily.value(), indices.presentFamily.value()};
-
-        float queuePriority = 1.0f;
-        for (uint32_t queueFamily : uniqueQueueFamilies) {
-            VkDeviceQueueCreateInfo queueCreateInfo{};
-            queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-            queueCreateInfo.queueFamilyIndex = queueFamily;
-            queueCreateInfo.queueCount = 1;
-            queueCreateInfo.pQueuePriorities = &queuePriority;
-            queueCreateInfos.push_back(queueCreateInfo);
-        }
 
         VkPhysicalDeviceFeatures deviceFeatures{};
         deviceFeatures.samplerAnisotropy = VK_TRUE;
@@ -332,8 +320,8 @@ public:
             throw std::runtime_error("failed to create logical device!");
         }
 
-        vkGetDeviceQueue(vkDevice, indices.graphicsFamily.value(), 0, &vkGraphicsQueue);
-        vkGetDeviceQueue(vkDevice, indices.presentFamily.value(), 0, &vkPresentQueue);
+        vkGetDeviceQueue(vkDevice, indices.graphics.value(), 0, &vkGraphicsQueue);
+        vkGetDeviceQueue(vkDevice, indices.present.value(), 0, &vkPresentQueue);
     }
 
     void createSwapChain() {
@@ -360,9 +348,9 @@ public:
         createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
         QueueFamilyIndices indices = findQueueFamilies(vkPhysicalDevice);
-        uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
+        uint32_t queueFamilyIndices[] = {indices.graphics.value(), indices.present.value()};
 
-        if (indices.graphicsFamily != indices.presentFamily) {
+        if (indices.graphics != indices.present) {
             createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
             createInfo.queueFamilyIndexCount = 2;
             createInfo.pQueueFamilyIndices = queueFamilyIndices;
@@ -630,18 +618,7 @@ public:
         }
     }
 
-    void createCommandPool() {
-        QueueFamilyIndices queueFamilyIndices = findQueueFamilies(vkPhysicalDevice);
 
-        VkCommandPoolCreateInfo poolInfo{};
-        poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-        poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-        poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
-
-        if (vkCreateCommandPool(vkDevice, &poolInfo, nullptr, &vkCommandPool) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create graphics command pool!");
-        }
-    }
 
     void createDepthResources() {
         VkFormat depthFormat = findDepthFormat();

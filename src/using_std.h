@@ -9,6 +9,8 @@ using std::vector;
 using std::optional;
 using std::set;
 using std::map;
+using std::multimap;
+using std::make_pair;
 
 #include <iostream>
 #include <stdexcept>
