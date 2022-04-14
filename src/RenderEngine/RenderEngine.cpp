@@ -3,18 +3,28 @@
 #include "glfw_vulkan.h"
 #include "VK/VK.h"
 
-GLFWwindow *RenderEngine::window = nullptr;
+#include <chrono>
+
+VkInstance instance = nullptr;
+GLFWwindow* window = nullptr;
 
 void RenderEngine::init() {
-    VK::createInstance();
+    window_create(480, 480, "v3rse");
+    instance = VK::createInstance();
+    VK::createDebugMessenger(instance);
+    VK::createSurface(instance, window);
 }
 
 void RenderEngine::loop() {
     while (!window_is_closed()) {
-        glfwPollEvents();
-        frame();
-    }
+//        typedef std::chrono::high_resolution_clock Clock;
+//        auto t1 = Clock::now();
+//        auto t2 = Clock::now();
 
+        frame();
+
+        window_update();
+    }
 //    vkDeviceWaitIdle(vkDevice);
 }
 
@@ -26,11 +36,16 @@ void RenderEngine::exit() {
 
 }
 
-void RenderEngine::window_update() {
+void RenderEngine::window_create(int width, int height, const char *title) {
+    glfwInit();
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
+    window = glfwCreateWindow(width, height, title, nullptr, nullptr);
+    //glfwSetWindowUserPointer(window, this);
+    glfwSetFramebufferSizeCallback(window, window_callback_resize);
 }
 
-void RenderEngine::window_create(uint32_t width, uint32_t height, const char *title) {
+void RenderEngine::window_callback_resize(GLFWwindow* window, int width, int height) {
 
 }
 
@@ -38,7 +53,7 @@ void RenderEngine::window_destroy() {
 
 }
 
-void RenderEngine::window_set_fullscreen(bool) {
+void RenderEngine::window_set_fullscreen(bool fullscreen) {
 
 }
 

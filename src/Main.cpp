@@ -4,26 +4,22 @@
 
 class App {
 public:
-    RenderEngine renderEngine;
-    
     void run() {
-        renderEngine.init();
+        RenderEngine::init();
         loop();
         exit();
     }
 
 private:
     void loop() {
-        while (!renderEngine.window_is_closed()) {
-
-            renderEngine.frame();
-
-            renderEngine.window_update();
+        while (!RenderEngine::window_is_closed()) {
+            RenderEngine::frame();
+            RenderEngine::window_update();
         }
     }
 
     void exit() {
-        renderEngine.exit();
+        RenderEngine::exit();
     }
 };
 

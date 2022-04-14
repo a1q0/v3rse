@@ -34,7 +34,7 @@ struct QueueFamilyIndices {
 };
 
 struct SurfaceDetails {
-    VkSurfaceCapabilitiesKHR vkSurfaceCapabilities;
+    VkSurfaceCapabilitiesKHR vkSurfaceCapabilities{};
     vector<VkSurfaceFormatKHR> vkSurfaceFormats;
     vector<VkPresentModeKHR> vkPresentModes;
 };
@@ -50,7 +50,7 @@ namespace VK {
                                   VkDebugUtilsMessageTypeFlagsEXT messageType,
                                   const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
                                   void *pUserData) {
-        std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+        if (messageSeverity > 1) std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
         return VK_FALSE;
     }
 
@@ -71,7 +71,7 @@ namespace VK {
         return CreateDebugUtilsMessengerEXT(vkInstance, &vkDebugUtilsMessengerCreateInfoEXT, nullptr, &vkDebugUtilsMessengerEXT);
     }
 
-    inline bool deleteDebugMessenger(VkInstance vkInstance) {
+    inline void deleteDebugMessenger(VkInstance vkInstance) {
         DestroyDebugUtilsMessengerEXT(vkInstance, vkDebugUtilsMessengerEXT, nullptr);
     }
 
@@ -102,7 +102,7 @@ namespace VK {
         vkInstanceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
         vkInstanceCreateInfo.ppEnabledExtensionNames = extensions.data();
 
-        if (layers.size() != 0) {
+        if (!layers.empty()) {
             if (!supportsLayers(layers)) {
                 throw std::runtime_error("requested layers not available!");
             }
@@ -302,4 +302,8 @@ namespace VK {
             return actualExtent;
         }
     }
+
+//    inline void createSwapChain(VkDevice vkPhysicalDevice, vkSurface) {
+//        SurfaceDetails surfaceDetails = getSurfaceDetails(vkPhysicalDevice, vkSurface);
+//    }
 };
