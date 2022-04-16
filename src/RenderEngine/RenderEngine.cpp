@@ -123,10 +123,14 @@ void RenderEngine::loop() {
 
 void RenderEngine::frame() {
     vkWaitForFences(device, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
-    vkResetFences(device, 1, &inFlightFence);
 
     uint32_t imageIndex;
-    vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, imageAvailableSemaphores, VK_NULL_HANDLE, &imageIndex);
+    VkResult result_acquireNextImage = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, imageAvailableSemaphores, VK_NULL_HANDLE, &imageIndex);
+    if (result_acquireNextImage == VK_ERROR_OUT_OF_DATE_KHR) {
+        return;
+    }
+
+    vkResetFences(device, 1, &inFlightFence);
 
     vkResetCommandBuffer(commandBuffer, 0); /*VkCommandBufferResetFlagBits*/
     VK::recordCommandBuffer(commandBuffer, imageIndex, renderPass, swapchain_framebuffers[imageIndex], swapchain_images_extent, pipeline);
