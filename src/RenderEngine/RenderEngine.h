@@ -42,7 +42,7 @@ struct Vertex {
     static VkBuffer createVertexBuffer(VkDevice vkDevice, const vector<Vertex>& vertices,
                                        VkBufferUsageFlags vkBufferUsageFlags,
                                        VkSharingMode vkSharingMode) {
-        VkBufferCreateInfo bufferCreateInfo {
+        VkBufferCreateInfo vkBufferCreateInfo {
             .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
             .pNext{},
             .flags{},
@@ -52,9 +52,14 @@ struct Vertex {
             .queueFamilyIndexCount{}, // TODO: maybe this has to be set to the current queue ?
             .pQueueFamilyIndices{}
         };
-        VkBuffer buffer;
-        vkCreateBuffer(vkDevice, &bufferCreateInfo, nullptr, &buffer);
-        return buffer;
+
+        VkBuffer vkBuffer;
+        vkCreateBuffer(vkDevice, &vkBufferCreateInfo, nullptr, &vkBuffer);
+
+        VkMemoryRequirements vkMemoryRequirements;
+        vkGetBufferMemoryRequirements(vkDevice, vkBuffer, &vkMemoryRequirements);
+
+        return vkBuffer;
     }
 };
 
