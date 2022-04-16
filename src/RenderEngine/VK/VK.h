@@ -1,9 +1,6 @@
 #pragma once
 #include "../glfw_vulkan.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-//#include <stb_image.h>
-
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
@@ -291,12 +288,16 @@ namespace VK {
         return details;
     }
 
-    inline bool supportsLayers(vector<const char*> layers) {
+    inline vector<VkLayerProperties> enumerateInstanceLayersProperties() {
         uint32_t layerCount;
         vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
-
         vector<VkLayerProperties> availableLayers(layerCount);
         vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+        return availableLayers;
+    }
+
+    inline bool supportsLayers(vector<const char*> layers) {
+        vector<VkLayerProperties> availableLayers = enumerateInstanceLayersProperties();
 
         for (const char* layerName : layers) {
             bool layerFound = false;
@@ -782,7 +783,7 @@ namespace VK {
         vkDestroyPipeline(vkDevice, vkPipeline, nullptr);
     }
 
-    void createDescriptorSetLayout() {
+    void createDescriptorSetLayout(VkDevice vkDevice) {
         VkDescriptorSetLayoutBinding uboLayoutBinding{};
         uboLayoutBinding.binding = 0;
         uboLayoutBinding.descriptorCount = 1;
@@ -803,9 +804,9 @@ namespace VK {
         layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
         layoutInfo.pBindings = bindings.data();
 
-//        if (vkCreateDescriptorSetLayout(vkDevice, &layoutInfo, nullptr, &vkDescriptorSetLayout) != VK_SUCCESS) {
-//            throw std::runtime_error("failed to create descriptor set layout!");
-//        }
+        if (vkCreateDescriptorSetLayout(vkDevice, &layoutInfo, nullptr, &vkDescriptorSetLayout) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create descriptor set layout!");
+        }
     }
 
     inline VkFramebuffer createFramebuffer(VkDevice vkDevice, VkRenderPass vkRenderPass, uint32_t width, uint32_t height, vector<VkImageView> vkImageViews) {
