@@ -30,6 +30,10 @@ VkFence inFlightFence;
 VkSemaphore imageAvailableSemaphores;
 VkSemaphore renderFinishedSemaphores;
 
+vector<Vertex> vertices = {{{ 0.0f, -0.5f,  0.0f}, {1.0f, 0.0f, 0.0f}},
+                           {{ 0.5f,  0.5f,  0.0f}, {0.0f, 1.0f, 0.0f}},
+                           {{-0.5f,  0.5f,  0.0f}, {0.0f, 0.0f, 1.0f}}};
+
 void RenderEngine::init() {
     window_create(width, height, "v3rse");
     instance = VK::createInstance();
@@ -77,22 +81,22 @@ void RenderEngine::init() {
     commandPool = VK::createCommandPool(physicalDevice, device, surface);
 
     VkCommandBufferAllocateInfo allocInfo {
-            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-            .pNext{},
-            .commandPool = commandPool,
-            .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-            .commandBufferCount = 1
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext{},
+        .commandPool = commandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1
     };
 
     vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
 
     VkSemaphoreCreateInfo semaphoreInfo {
-            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
     };
 
     VkFenceCreateInfo fenceInfo {
-            .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-            .flags = VK_FENCE_CREATE_SIGNALED_BIT
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+        .flags = VK_FENCE_CREATE_SIGNALED_BIT
     };
 
     if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphores) != VK_SUCCESS ||

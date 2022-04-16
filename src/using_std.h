@@ -8,8 +8,10 @@
 #include <optional>
 #include <set>
 #include <map>
+#include <array>
 
 using std::vector;
+using std::array;
 using std::optional;
 using std::set;
 using std::map;
