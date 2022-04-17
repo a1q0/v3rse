@@ -1,16 +1,17 @@
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include "glfw_vulkan.h"
 #include "../using_std.h"
+#include "../using_glm.h"
 
 #include <glm/glm.hpp>
 
 using glm::vec3;
 
 struct Vertex {
-    glm::vec3 pos;
-    glm::vec3 color;
+    vec3 pos;
+    vec3 color;
 
     static VkVertexInputBindingDescription getBindingDescription() {
         return (VkVertexInputBindingDescription) {
@@ -59,6 +60,8 @@ struct Vertex {
         VkMemoryRequirements vkMemoryRequirements;
         vkGetBufferMemoryRequirements(vkDevice, vkBuffer, &vkMemoryRequirements);
 
+
+
         return vkBuffer;
     }
 };
@@ -82,4 +85,4 @@ namespace RenderEngine {
     bool window_is_closed();
     void window_set_fullscreen(bool);
     void window_is_fullscreen();
-};
+}
