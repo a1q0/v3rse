@@ -123,7 +123,6 @@ void RenderEngine::loop() {
 
         frame();
         window_update();
-
     }
     vkDeviceWaitIdle(device);
 }
@@ -135,6 +134,7 @@ void RenderEngine::frame() {
     VkResult result_acquireNextImage = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, imageAvailableSemaphores,
                                                              VK_NULL_HANDLE, &imageIndex);
     if (result_acquireNextImage == VK_ERROR_OUT_OF_DATE_KHR) {
+        info("window resized ? swapchain out of date.");
         return;
     }
 
@@ -212,7 +212,7 @@ void RenderEngine::window_callback_resize(GLFWwindow* window, int width, int hei
 }
 
 void RenderEngine::window_destroy() {
-
+    glfwDestroyWindow(window);
 }
 
 void RenderEngine::window_set_fullscreen(bool fullscreen) {

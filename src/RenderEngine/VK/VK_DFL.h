@@ -1,6 +1,6 @@
 #pragma once
 
-#include "VK.h"
+#include "glfw_vulkan.h"
 
 // dynamic function loading
 

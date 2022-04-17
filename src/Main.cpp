@@ -7,7 +7,7 @@ public:
     void run() {
         RenderEngine::init();
         RenderEngine::loop();
-        //loop();
+
         exit();
     }
 
@@ -25,7 +25,7 @@ private:
 };
 
 int main() {
-    App app{};
+    App app {};
 
     try {
         app.run();
