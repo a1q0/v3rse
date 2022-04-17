@@ -1,4 +1,5 @@
 #pragma once
+
 #include "../glfw_vulkan.h"
 
 #include <iostream>
@@ -43,8 +44,8 @@ struct SurfaceDetails {
 
 namespace VK {
 
-    inline VkInstance createInstance(vector<const char*> extensions = { },
-                                     vector<const char*> layers = { "VK_LAYER_KHRONOS_validation" },
+    inline VkInstance createInstance(vector<const char*> extensions = {},
+                                     vector<const char*> layers = {"VK_LAYER_KHRONOS_validation"},
                                      const char* appName = "",
                                      VkDebugUtilsMessengerCreateInfoEXT vkDebugUtilsMessengerCreateInfoEXT = vkDefaultDebugUtilsMessengerCreateInfoEXT) {
 
@@ -112,9 +113,9 @@ namespace VK {
 
     inline VkDevice createLogicalDevice(VkPhysicalDevice vkPhysicalDevice,
                                         vector<VkDeviceQueueCreateInfo> queueCreateInfos,
-                                        vector<const char*> extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME },
+                                        vector<const char*> extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME},
                                         VkPhysicalDeviceFeatures* features = nullptr,
-                                        vector <const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" }) {
+                                        vector<const char*> validationLayers = {"VK_LAYER_KHRONOS_validation"}) {
         VkDeviceCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 
@@ -143,8 +144,9 @@ namespace VK {
         vkDestroyDevice(vkDevice, nullptr);
     }
 
-    inline VkImageView createImageView(VkDevice vkDevice, VkImage image, VkFormat format, VkImageAspectFlags aspectFlags) {
-        VkImageViewCreateInfo vkImageViewCreateInfo {
+    inline VkImageView
+    createImageView(VkDevice vkDevice, VkImage image, VkFormat format, VkImageAspectFlags aspectFlags) {
+        VkImageViewCreateInfo vkImageViewCreateInfo{
                 .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
                 .pNext = nullptr,
                 .flags = {},
@@ -180,14 +182,14 @@ namespace VK {
     }
 
     inline VkCommandPool createCommandPool(VkDevice vkDevice, QueueFamilyIndices queueFamilyIndices) {
-        VkCommandPoolCreateInfo vkCommandPoolCreateInfo {
-            .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-            .pNext{},
-            .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-            .queueFamilyIndex = queueFamilyIndices.graphics.value()
+        VkCommandPoolCreateInfo vkCommandPoolCreateInfo{
+                .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+                .pNext{},
+                .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+                .queueFamilyIndex = queueFamilyIndices.graphics.value()
         };
 
-        VkCommandPool  vkCommandPool;
+        VkCommandPool vkCommandPool;
         vkCreateCommandPool(vkDevice, &vkCommandPoolCreateInfo, nullptr, &vkCommandPool);
         return vkCommandPool;
     }
@@ -196,8 +198,10 @@ namespace VK {
         vkDestroyCommandPool(vkDevice, vkCommandPool, nullptr);
     }
 
-    inline void recordCommandBuffer(VkCommandBuffer vkCommandBuffer, VkRenderPass vkRenderPass, VkFramebuffer vkFramebuffer, VkExtent2D extent, VkPipeline vkPipeline) {
-        VkCommandBufferBeginInfo beginInfo {
+    inline void
+    recordCommandBuffer(VkCommandBuffer vkCommandBuffer, VkRenderPass vkRenderPass, VkFramebuffer vkFramebuffer,
+                        VkExtent2D extent, VkPipeline vkPipeline) {
+        VkCommandBufferBeginInfo beginInfo{
                 .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
                 .pNext{},
                 .flags{},
@@ -206,7 +210,7 @@ namespace VK {
         vkBeginCommandBuffer(vkCommandBuffer, &beginInfo);
 
         VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
-        VkRenderPassBeginInfo renderPassInfo {
+        VkRenderPassBeginInfo renderPassInfo{
                 .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
                 .pNext{},
                 .renderPass = vkRenderPass,
@@ -263,7 +267,7 @@ namespace VK {
     }
 
     inline VkRenderPass createRenderPass(VkDevice vkDevice, VkFormat vkFormat) {
-        VkAttachmentDescription colorAttachment {
+        VkAttachmentDescription colorAttachment{
                 .flags{},
                 .format = vkFormat,
                 .samples = VK_SAMPLE_COUNT_1_BIT,
@@ -275,12 +279,12 @@ namespace VK {
                 .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
         };
 
-        VkAttachmentReference colorAttachmentRef {
+        VkAttachmentReference colorAttachmentRef{
                 .attachment = 0,
                 .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
         };
 
-        VkSubpassDescription vkSubpassDescription {
+        VkSubpassDescription vkSubpassDescription{
                 .flags{},
                 .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
                 .inputAttachmentCount{},
@@ -293,7 +297,7 @@ namespace VK {
                 .pPreserveAttachments{}
         };
 
-        VkSubpassDependency vkSubpassDependency {
+        VkSubpassDependency vkSubpassDependency{
                 .srcSubpass = VK_SUBPASS_EXTERNAL,
                 .dstSubpass = 0,
                 .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // waiting for operation start
@@ -303,7 +307,7 @@ namespace VK {
                 .dependencyFlags{}
         };
 
-        VkRenderPassCreateInfo renderPassInfo {
+        VkRenderPassCreateInfo renderPassInfo{
                 .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
                 .pNext{},
                 .flags{},
@@ -324,7 +328,8 @@ namespace VK {
         vkDestroyRenderPass(vkDevice, vkRenderPass, nullptr);
     }
 
-    inline VkPipeline createGraphicsPipeline(VkDevice vkDevice, VkExtent2D extent, VkRenderPass vkRenderPass, VkPipelineLayout& vkPipelineLayout, VkPipeline& vkPipeline) {
+    inline VkPipeline createGraphicsPipeline(VkDevice vkDevice, VkExtent2D extent, VkRenderPass vkRenderPass,
+                                             VkPipelineLayout& vkPipelineLayout, VkPipeline& vkPipeline) {
         auto vertShaderCode = readFile("dat/shaders/default.vert.glsl.spv");
         auto fragShaderCode = readFile("dat/shaders/default.frag.glsl.spv");
 
@@ -365,7 +370,7 @@ namespace VK {
                 .primitiveRestartEnable = VK_FALSE
         };
 
-        VkViewport viewport {
+        VkViewport viewport{
                 .x = 0.0f,
                 .y = 0.0f,
                 .width = (float) extent.width,
@@ -374,12 +379,12 @@ namespace VK {
                 .maxDepth = 1.0f
         };
 
-        VkRect2D scissor {
+        VkRect2D scissor{
                 .offset = {0, 0},
                 .extent = extent
         };
 
-        VkPipelineViewportStateCreateInfo viewportState {
+        VkPipelineViewportStateCreateInfo viewportState{
                 .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
                 .viewportCount = 1,
                 .pViewports = &viewport,
@@ -387,7 +392,7 @@ namespace VK {
                 .pScissors = &scissor
         };
 
-        VkPipelineRasterizationStateCreateInfo rasterizer {
+        VkPipelineRasterizationStateCreateInfo rasterizer{
                 .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
                 .pNext{},
                 .flags{},
@@ -403,7 +408,7 @@ namespace VK {
                 .lineWidth = 1.0f
         };
 
-        VkPipelineMultisampleStateCreateInfo multisampling {
+        VkPipelineMultisampleStateCreateInfo multisampling{
                 .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
                 .pNext{},
                 .flags{},
@@ -415,7 +420,7 @@ namespace VK {
                 .alphaToOneEnable{}
         };
 
-        VkPipelineDepthStencilStateCreateInfo depthStencil {
+        VkPipelineDepthStencilStateCreateInfo depthStencil{
                 .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
                 .depthTestEnable = VK_TRUE,
                 .depthWriteEnable = VK_TRUE,
@@ -424,7 +429,7 @@ namespace VK {
                 .stencilTestEnable = VK_FALSE,
         };
 
-        VkPipelineColorBlendAttachmentState colorBlendAttachment {
+        VkPipelineColorBlendAttachmentState colorBlendAttachment{
                 .blendEnable = VK_FALSE,
                 .srcColorBlendFactor{},
                 .dstColorBlendFactor{},
@@ -432,10 +437,11 @@ namespace VK {
                 .srcAlphaBlendFactor{},
                 .dstAlphaBlendFactor{},
                 .alphaBlendOp{},
-                .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
+                .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT |
+                                  VK_COLOR_COMPONENT_A_BIT
         };
 
-        VkPipelineColorBlendStateCreateInfo colorBlending {
+        VkPipelineColorBlendStateCreateInfo colorBlending{
                 .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
                 .pNext = nullptr,
                 .flags{},
@@ -443,10 +449,10 @@ namespace VK {
                 .logicOp = VK_LOGIC_OP_COPY,
                 .attachmentCount = 1,
                 .pAttachments = &colorBlendAttachment,
-                .blendConstants { 0.0f, 0.0f, 0.0f, 0.0f }
+                .blendConstants {0.0f, 0.0f, 0.0f, 0.0f}
         };
 
-        VkPipelineLayoutCreateInfo pipelineLayoutInfo {
+        VkPipelineLayoutCreateInfo pipelineLayoutInfo{
                 .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
                 .pNext{},
                 .flags{},
@@ -458,7 +464,7 @@ namespace VK {
 
         vkCreatePipelineLayout(vkDevice, &pipelineLayoutInfo, nullptr, &vkPipelineLayout);
 
-        VkGraphicsPipelineCreateInfo pipelineCreateInfo {
+        VkGraphicsPipelineCreateInfo pipelineCreateInfo{
                 .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
                 .pNext{},
                 .flags{},
@@ -480,7 +486,8 @@ namespace VK {
                 .basePipelineIndex{}
         };
 
-        if (vkCreateGraphicsPipelines(vkDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &vkPipeline) != VK_SUCCESS) {
+        if (vkCreateGraphicsPipelines(vkDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &vkPipeline) !=
+            VK_SUCCESS) {
             throw std::runtime_error("failed to create pipeline!");
         }
 
@@ -499,7 +506,7 @@ namespace VK {
     }
 
     inline VkDescriptorSetLayout createDescriptorSetLayout(VkDevice vkDevice) {
-        VkDescriptorSetLayoutBinding uboLayoutBinding {
+        VkDescriptorSetLayoutBinding uboLayoutBinding{
                 .binding = 0,
                 .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                 .descriptorCount = 1,
@@ -507,7 +514,7 @@ namespace VK {
                 .pImmutableSamplers = nullptr,
         };
 
-        VkDescriptorSetLayoutBinding samplerLayoutBinding {
+        VkDescriptorSetLayoutBinding samplerLayoutBinding{
                 .binding = 1,
                 .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
                 .descriptorCount = 1,
@@ -516,7 +523,7 @@ namespace VK {
         };
 
         std::array<VkDescriptorSetLayoutBinding, 2> bindings = {uboLayoutBinding, samplerLayoutBinding};
-        VkDescriptorSetLayoutCreateInfo layoutInfo {
+        VkDescriptorSetLayoutCreateInfo layoutInfo{
                 .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
                 .pNext{},
                 .flags{},
@@ -531,8 +538,10 @@ namespace VK {
         return vkDescriptorSetLayout;
     }
 
-    inline VkFramebuffer createFramebuffer(VkDevice vkDevice, VkRenderPass vkRenderPass, uint32_t width, uint32_t height, vector<VkImageView> vkImageViews) {
-        VkFramebufferCreateInfo framebufferInfo {
+    inline VkFramebuffer
+    createFramebuffer(VkDevice vkDevice, VkRenderPass vkRenderPass, uint32_t width, uint32_t height,
+                      vector<VkImageView> vkImageViews) {
+        VkFramebufferCreateInfo framebufferInfo{
                 .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
                 .pNext{},
                 .flags{},
@@ -591,7 +600,7 @@ namespace VK {
 
     inline VkDeviceQueueCreateInfo getQueueCreateInfo(uint32_t queueFamilyIndex,
                                                       uint32_t queueCount,
-                                                      float &queuePriority) {
+                                                      float& queuePriority) {
         VkDeviceQueueCreateInfo vkDeviceQueueCreateInfo{};
         vkDeviceQueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
         vkDeviceQueueCreateInfo.queueFamilyIndex = queueFamilyIndex;
@@ -604,7 +613,7 @@ namespace VK {
         vector<VkDeviceQueueCreateInfo> vkDeviceQueueCreateInfos{};
 
         float queuePriority = 0.5f;
-        for (uint32_t queueFamilyIndex : indices.unique_set()) {
+        for (uint32_t queueFamilyIndex: indices.unique_set()) {
             vkDeviceQueueCreateInfos.push_back(getQueueCreateInfo(queueFamilyIndex, 1, queuePriority));
         }
 
@@ -615,7 +624,7 @@ namespace VK {
         VkPhysicalDeviceMemoryProperties vkPhysicalDeviceMemoryProperties;
         vkGetPhysicalDeviceMemoryProperties(vkPhysicalDevice, &vkPhysicalDeviceMemoryProperties);
 
-        info(vkPhysicalDeviceMemoryProperties.memoryTypesCOunt);
+        info(vkPhysicalDeviceMemoryProperties.memoryTypesCount.);
 
         return vkPhysicalDeviceMemoryProperties;
     }
@@ -626,7 +635,7 @@ namespace VK {
         return vkPhysicalDeviceFeatures;
     }
 
-    inline  VkPhysicalDeviceProperties getPhysicalDeviceProperties(VkPhysicalDevice vkPhysicalDevice) {
+    inline VkPhysicalDeviceProperties getPhysicalDeviceProperties(VkPhysicalDevice vkPhysicalDevice) {
         VkPhysicalDeviceProperties vkPhysicalDeviceProperties;
         vkGetPhysicalDeviceProperties(vkPhysicalDevice, &vkPhysicalDeviceProperties);
         return vkPhysicalDeviceProperties;
@@ -642,13 +651,14 @@ namespace VK {
 
     // select the first queue that has present & graphics abilities
     inline QueueFamilyIndices getQueueFamilyIndices(VkPhysicalDevice vkPhysicalDevice, VkSurfaceKHR vkSurface,
-                                                    vector<VkQueueFamilyProperties> vkQueueFamilyProperties = vector<VkQueueFamilyProperties>{0}) {
+                                                    vector<VkQueueFamilyProperties> vkQueueFamilyProperties = vector<VkQueueFamilyProperties>{
+                                                            0}) {
         QueueFamilyIndices indices;
 
         if (vkQueueFamilyProperties.empty()) vkQueueFamilyProperties = getQueueFamilyProperties(vkPhysicalDevice);
 
         int i = 0;
-        for (const auto& queueFamily : vkQueueFamilyProperties) {
+        for (const auto& queueFamily: vkQueueFamilyProperties) {
             VkBool32 presentSupport = false;
             vkGetPhysicalDeviceSurfaceSupportKHR(vkPhysicalDevice, i, vkSurface, &presentSupport);
 
@@ -694,10 +704,10 @@ namespace VK {
     inline bool supportsLayers(vector<const char*> layers) {
         vector<VkLayerProperties> availableLayers = enumerateInstanceLayersProperties();
 
-        for (const char* layerName : layers) {
+        for (const char* layerName: layers) {
             bool layerFound = false;
 
-            for (const auto& layerProperties : availableLayers) {
+            for (const auto& layerProperties: availableLayers) {
                 if (strcmp(layerName, layerProperties.layerName) == 0) {
                     layerFound = true;
                     break;
@@ -721,7 +731,7 @@ namespace VK {
 
         set<std::string> requiredExtensions(extensions.begin(), extensions.end());
 
-        for (const auto& extension : availableExtensions) {
+        for (const auto& extension: availableExtensions) {
             requiredExtensions.erase(extension.extensionName);
         }
 
@@ -732,7 +742,7 @@ namespace VK {
         QueueFamilyIndices indices = getQueueFamilyIndices(vkPhysicalDevice, vkSurface,
                                                            getQueueFamilyProperties(vkPhysicalDevice));
 
-        bool extensionsSupported = supportsExtensions(vkPhysicalDevice, { VK_KHR_SWAPCHAIN_EXTENSION_NAME });
+        bool extensionsSupported = supportsExtensions(vkPhysicalDevice, {VK_KHR_SWAPCHAIN_EXTENSION_NAME});
         bool swapChainAdequate = false;
         if (extensionsSupported) {
             SurfaceDetails surfaceDetails = getSurfaceDetails(vkPhysicalDevice, vkSurface);
@@ -752,7 +762,7 @@ namespace VK {
 
         multimap<int, VkPhysicalDevice> candidates;
 
-        for (const auto& device : devices) {
+        for (const auto& device: devices) {
             if (isDeviceSuitable(device, vkSurface)) {
                 candidates.insert(make_pair(getPhysicalDeviceScore(device), device));
             }
@@ -762,9 +772,9 @@ namespace VK {
     }
 
     inline VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats,
-                                                          VkFormat format = VK_FORMAT_B8G8R8A8_SRGB,
-                                                          VkColorSpaceKHR colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-        for (const auto& availableFormat : availableFormats) {
+                                                      VkFormat format = VK_FORMAT_B8G8R8A8_SRGB,
+                                                      VkColorSpaceKHR colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+        for (const auto& availableFormat: availableFormats) {
             if (availableFormat.format == format && availableFormat.colorSpace == colorSpace) {
                 return availableFormat;
             }
@@ -774,8 +784,8 @@ namespace VK {
     }
 
     inline VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes,
-                                                      VkPresentModeKHR mode = VK_PRESENT_MODE_MAILBOX_KHR) {
-        for (const auto& availablePresentMode : availablePresentModes) {
+                                                  VkPresentModeKHR mode = VK_PRESENT_MODE_MAILBOX_KHR) {
+        for (const auto& availablePresentMode: availablePresentModes) {
             if (availablePresentMode == mode) {
                 return availablePresentMode;
             }
@@ -788,24 +798,28 @@ namespace VK {
         if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
             return capabilities.currentExtent;
         } else {
-            VkExtent2D actualExtent = { width, height };
+            VkExtent2D actualExtent = {width, height};
 
-            actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
-            actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
+            actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width,
+                                            capabilities.maxImageExtent.width);
+            actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height,
+                                             capabilities.maxImageExtent.height);
 
             return actualExtent;
         }
     }
 
-    inline VkSwapchainKHR createSwapchain(VkPhysicalDevice vkPhysicalDevice, VkDevice vkDevice, VkSurfaceKHR vkSurface, const SurfaceDetails& surfaceDetails,
-                                          uint32_t width, uint32_t height, VkSurfaceFormatKHR surfaceFormat, VkPresentModeKHR presentMode, VkExtent2D extent) {
+    inline VkSwapchainKHR createSwapchain(VkPhysicalDevice vkPhysicalDevice, VkDevice vkDevice, VkSurfaceKHR vkSurface,
+                                          const SurfaceDetails& surfaceDetails,
+                                          uint32_t width, uint32_t height, VkSurfaceFormatKHR surfaceFormat,
+                                          VkPresentModeKHR presentMode, VkExtent2D extent) {
         uint32_t imageCount = surfaceDetails.vkSurfaceCapabilities.minImageCount + 1;
         if (surfaceDetails.vkSurfaceCapabilities.maxImageCount > 0
-        && imageCount > surfaceDetails.vkSurfaceCapabilities.maxImageCount) {
+            && imageCount > surfaceDetails.vkSurfaceCapabilities.maxImageCount) {
             imageCount = surfaceDetails.vkSurfaceCapabilities.maxImageCount;
         }
 
-        VkSwapchainCreateInfoKHR vkSwapchainCreateInfoKHR {
+        VkSwapchainCreateInfoKHR vkSwapchainCreateInfoKHR{
                 .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
                 .pNext{},
                 .flags{},
@@ -826,7 +840,8 @@ namespace VK {
                 .oldSwapchain{}
         };
 
-        QueueFamilyIndices indices = getQueueFamilyIndices(vkPhysicalDevice, vkSurface, getQueueFamilyProperties(vkPhysicalDevice));
+        QueueFamilyIndices indices = getQueueFamilyIndices(vkPhysicalDevice, vkSurface,
+                                                           getQueueFamilyProperties(vkPhysicalDevice));
         uint32_t queueFamilyIndices[] = {indices.graphics.value(), indices.present.value()};
 
         if (indices.graphics != indices.present) {
@@ -862,7 +877,7 @@ namespace VK {
 
     inline void printQueueFamilies(VkPhysicalDevice vkPhysicalDevice) {
         int i = 0;
-        for (const auto& a : getQueueFamilyProperties(vkPhysicalDevice)) {
+        for (const auto& a: getQueueFamilyProperties(vkPhysicalDevice)) {
             info("family {}, queue count: {}", i, a.queueCount);
 
             if (VK_QUEUE_GRAPHICS_BIT & a.queueFlags) info("graphics !");

@@ -13,7 +13,9 @@
 #elif defined(SPDLOG_FMT_EXTERNAL)
 #    include <fmt/locale.h>
 #else
+
 #    include "spdlog/fmt/bundled/format.h"
+
 #endif
 
 using spdlog::info;
