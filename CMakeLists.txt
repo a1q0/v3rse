@@ -52,8 +52,10 @@ add_definitions(-DVK_USE_PLATFORM_WIN32_KHR)
 
 link_directories(lib)
 link_directories(${Vulkan_LIBRARY})
-include_directories(inc)
+include_directories(lib/inc)
 include_directories(${Vulkan_INCLUDE_DIRS})
+
+include_directories(inc)
 
 file(GLOB_RECURSE CPP src/*.cpp)
 file(GLOB_RECURSE H src/*.h)

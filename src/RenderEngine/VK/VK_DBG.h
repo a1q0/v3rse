@@ -1,5 +1,7 @@
 #pragma once
 
+#include "glfw_vulkan.h"
+
 namespace VK {
     inline void CHECK(VkResult result, const char* msg = "Vulkan check failed!") {
         if (result != VK_SUCCESS) {
