@@ -8,12 +8,6 @@
 
 #include <GLFW/glfw3native.h>
 
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-
-#include "glm/glm.hpp"
-#include "glm/gtc/matrix_transform.hpp"
-
 // TODO: check that the compilers are actually inlining the code and that it actually makes
 //  a difference in performance.
 #ifdef _MSC_VER // msvsc

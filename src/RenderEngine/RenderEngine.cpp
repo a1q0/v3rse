@@ -1,9 +1,10 @@
 #include "RenderEngine.h"
 
 #include "glfw_vulkan.h"
+#include "using_std.h"
+#include "logging.h"
 #include "VK/VK.h"
 
-#include <chrono>
 
 VkInstance instance = nullptr;
 VkSurfaceKHR surface = nullptr;
@@ -83,23 +84,23 @@ void RenderEngine::init() {
 
     commandPool = VK::createCommandPool(device, queueFamilyIndices);
 
-    VkCommandBufferAllocateInfo allocInfo{
-            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-            .pNext{},
-            .commandPool = commandPool,
-            .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-            .commandBufferCount = 1
+    VkCommandBufferAllocateInfo allocInfo {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext{},
+        .commandPool = commandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1
     };
 
     vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
 
-    VkSemaphoreCreateInfo semaphoreInfo{
-            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
+    VkSemaphoreCreateInfo semaphoreInfo {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
     };
 
-    VkFenceCreateInfo fenceInfo{
-            .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-            .flags = VK_FENCE_CREATE_SIGNALED_BIT
+    VkFenceCreateInfo fenceInfo {
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+        .flags = VK_FENCE_CREATE_SIGNALED_BIT
     };
 
     if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphores) != VK_SUCCESS ||
@@ -107,6 +108,9 @@ void RenderEngine::init() {
         vkCreateFence(device, &fenceInfo, nullptr, &inFlightFence) != VK_SUCCESS) {
         throw std::runtime_error("failed to create synchronization objects for a frame!");
     }
+
+    //VkPhysicalDeviceMemoryProperties memoryProperties = VK::getPhysicalDeviceMemoryProperties(physicalDevice);
+    Vertex::createVertexBuffer(device, vertices, VK_SHARING_MODE_EXCLUSIVE);
 }
 
 void RenderEngine::loop() {
@@ -145,29 +149,29 @@ void RenderEngine::frame() {
                             swapchain_images_extent, pipeline);
 
     VkPipelineStageFlags stageFlags[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-    VkSubmitInfo submitInfo{
-            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-            .pNext{},
-            .waitSemaphoreCount = 1,
-            .pWaitSemaphores = &imageAvailableSemaphores,
-            .pWaitDstStageMask = stageFlags,
-            .commandBufferCount = 1,
-            .pCommandBuffers = &commandBuffer,
-            .signalSemaphoreCount = 1,
-            .pSignalSemaphores = &renderFinishedSemaphores
+    VkSubmitInfo submitInfo {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .pNext{},
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &imageAvailableSemaphores,
+        .pWaitDstStageMask = stageFlags,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &commandBuffer,
+        .signalSemaphoreCount = 1,
+        .pSignalSemaphores = &renderFinishedSemaphores
     };
 
     vkQueueSubmit(queue_graphics, 1, &submitInfo, inFlightFence);
 
-    VkPresentInfoKHR presentInfo{
-            .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-            .pNext{},
-            .waitSemaphoreCount = 1,
-            .pWaitSemaphores = &renderFinishedSemaphores,
-            .swapchainCount = 1,
-            .pSwapchains = &swapchain,
-            .pImageIndices = &imageIndex,
-            .pResults{}
+    VkPresentInfoKHR presentInfo {
+        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+        .pNext{},
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &renderFinishedSemaphores,
+        .swapchainCount = 1,
+        .pSwapchains = &swapchain,
+        .pImageIndices = &imageIndex,
+        .pResults{}
     };
 
     vkQueuePresentKHR(queue_present, &presentInfo);

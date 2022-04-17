@@ -2,8 +2,9 @@
 
 #include <cstdint>
 #include "glfw_vulkan.h"
-#include "../using_std.h"
-#include "../using_glm.h"
+#include "using_std.h"
+#include "using_glm.h"
+#include "logging.h"
 
 #include <glm/glm.hpp>
 
@@ -39,14 +40,13 @@ struct Vertex {
     }
 
     static VkBuffer createVertexBuffer(VkDevice vkDevice, const vector<Vertex>& vertices,
-                                       VkBufferUsageFlags vkBufferUsageFlags,
                                        VkSharingMode vkSharingMode) {
         VkBufferCreateInfo vkBufferCreateInfo {
             .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
             .pNext{},
             .flags{},
             .size = sizeof(vertices[0]) * vertices.size(),
-            .usage = vkBufferUsageFlags,
+            .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
             .sharingMode = vkSharingMode,
             .queueFamilyIndexCount{}, // TODO: maybe this has to be set to the current queue ?
             .pQueueFamilyIndices{}
@@ -57,6 +57,10 @@ struct Vertex {
 
         VkMemoryRequirements vkMemoryRequirements;
         vkGetBufferMemoryRequirements(vkDevice, vkBuffer, &vkMemoryRequirements);
+
+        info("memory requirements:\nsize: {}\nalignment: {}", vkMemoryRequirements.size,
+             vkMemoryRequirements.alignment);
+
 
         return vkBuffer;
     }

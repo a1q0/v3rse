@@ -1,6 +1,6 @@
 
 #include "RenderEngine/RenderEngine.h"
-#include "Logging.h"
+#include "logging.h"
 
 class App {
 public:
