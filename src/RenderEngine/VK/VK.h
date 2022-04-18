@@ -24,8 +24,6 @@
 
 #include "logging.h"
 
-typedef VkPhysicalDeviceMemoryProperties VkMemoryProperties;
-
 struct QueueFamilyIndices {
     std::optional<uint32_t> graphics;
     std::optional<uint32_t> present;

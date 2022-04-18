@@ -109,8 +109,8 @@ void RenderEngine::init() {
         throw std::runtime_error("failed to create synchronization objects for a frame!");
     }
 
-    //VkPhysicalDeviceMemoryProperties memoryProperties = VK::getPhysicalDeviceMemoryProperties(physicalDevice);
-    Vertex::createVertexBuffer(device, vertices, VK_SHARING_MODE_EXCLUSIVE);
+    VkPhysicalDeviceMemoryProperties memoryProperties = VK::getPhysicalDeviceMemoryProperties(physicalDevice);
+    //Vertex::createVertexBuffer(device, vertices, VK_SHARING_MODE_EXCLUSIVE);
 }
 
 void RenderEngine::loop() {
