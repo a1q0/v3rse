@@ -444,14 +444,6 @@ namespace VK {
         vkDestroySwapchainKHR(vkDevice, vkSwapchain, nullptr);
     }
 
-    force_inline vector<VkImage> getSwapchainImages(VkDevice vkDevice, VkSwapchainKHR vkSwapchainKHR) {
-        uint32_t count;
-        vkGetSwapchainImagesKHR(vkDevice, vkSwapchainKHR, &count, nullptr);
-        vector<VkImage> vkImages(count);
-        vkGetSwapchainImagesKHR(vkDevice, vkSwapchainKHR, &count, vkImages.data());
-        return vkImages;
-    }
-
     force_inline void printQueueFamilies(VkPhysicalDevice vkPhysicalDevice) {
         int i = 0;
         for (const auto& a: Queues::getQueueFamilyProperties(vkPhysicalDevice)) {

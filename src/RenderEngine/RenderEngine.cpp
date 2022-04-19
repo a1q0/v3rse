@@ -5,14 +5,6 @@
 #include "logging.h"
 #include "VK/VK.h"
 
-VkSwapchainKHR swapchain = nullptr;
-
-vector<VkFramebuffer> swapchain_framebuffers;
-vector<VkImageView> swapchain_images_view;
-vector<VkImage> swapchain_images;
-VkFormat swapchain_images_format;
-VkExtent2D swapchain_images_extent;
-
 VkRenderPass renderPass;
 VkPipelineLayout pipelineLayout;
 VkPipeline pipeline;
@@ -47,16 +39,11 @@ void RenderEngine::init() {
 
     window_framebuffer_size(fb_width, fb_height);
     info("{} {}", fb_width, fb_height);
-    VkExtent2D extent = VK::chooseSwapExtent(VK::surface.vkSurfaceCapabilities, width, height);
 
-    swapchain = VK::createSwapchain(VK::physicalDevice, VK::device, VK::surface, VK::surface, width, height,
-                                    surfaceFormat,
-                                    presentMode, extent);
-    swapchain_images_format = surfaceFormat.format;
-    swapchain_images_extent = extent;
+    VK::swapchain.createSwapchain(width, height);
 
-    vkGetDeviceQueue(VK::device, queueFamilyIndices.graphics.value(), 0, &queue_graphics);
-    vkGetDeviceQueue(VK::device, queueFamilyIndices.present.value(), 0, &queue_present);
+    vkGetDeviceQueue(VK::device, VK::queues.graphics.value(), 0, &queue_graphics);
+    vkGetDeviceQueue(VK::device, VK::queues.present.value(), 0, &queue_present);
 
     if (queue_graphics == queue_present) info("using same queue for graphics and presentation");
 
