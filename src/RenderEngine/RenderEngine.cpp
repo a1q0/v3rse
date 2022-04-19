@@ -29,34 +29,18 @@ void RenderEngine::init() {
 
     VK::init();
 
-    VK::device = VK::createLogicalDevice();
-    VK::surface.init();
-    VK::surface.chooseSwapSurfaceFormat();
-    VK::surface.chooseSwapPresentMode();
-
     int fb_width;
     int fb_height;
 
     window_framebuffer_size(fb_width, fb_height);
-    info("{} {}", fb_width, fb_height);
 
-    VK::swapchain.createSwapchain(width, height);
+    VK::surface.swapchain.createSwapchain(width, height);
 
-    vkGetDeviceQueue(VK::device, VK::queues.graphics.value(), 0, &queue_graphics);
-    vkGetDeviceQueue(VK::device, VK::queues.present.value(), 0, &queue_present);
 
-    if (queue_graphics == queue_present) info("using same queue for graphics and presentation");
+    VK::swapchain.create();
 
-    swapchain_images = VK::getSwapchainImages(VK::device, swapchain);
-
-    swapchain_images_view.resize(swapchain_images.size());
-    for (int i = 0; i < swapchain_images.size(); i++) {
-        swapchain_images_view[i] = VK::createImageView(VK::device, swapchain_images[i], swapchain_images_format,
-                                                       VK_IMAGE_ASPECT_COLOR_BIT);
-    }
-
-    renderPass = VK::createRenderPass(VK::device, surfaceFormat.format);
-    VK::createGraphicsPipeline(VK::device, extent, renderPass, pipelineLayout, pipeline);
+    VK::renderPass.createRenderPass();
+    VK::pipeline.createGraphicsPipeline();
 
     swapchain_framebuffers.resize(swapchain_images.size());
     for (int i = 0; i < swapchain_images.size(); i++) {
@@ -170,18 +154,16 @@ void RenderEngine::exit() {
         VK::deleteFramebuffer(VK::device, f);
     }
 
-    for (const auto& iv: swapchain_images_view) {
-        VK::deleteImageView(VK::device, iv);
-    }
+    VK::swapchain.destroy();
 
     VK::deleteCommandPool(VK::device, commandPool);
-    VK::deleteRenderPass(VK::device, renderPass);
+    VK::renderPass.deleteRenderPass(VK::device, renderPass);
     VK::deletePipelineLayout(VK::device, pipelineLayout);
-    VK::deletePipeline(VK::device, pipeline);
+    VK::pipeline.deletePipeline(VK::device, pipeline);
     VK::deleteSwapchain(VK::device, swapchain);
-    VK::deleteSurface(VK::instance, VK::surface);
-    VK::deleteLogicalDevice(VK::device);
-    VK::deleteInstance(VK::instance);
+    VK::surface.destroy();
+    VK::deleteLogicalDevice();
+    VK::deleteInstance();
 }
 
 void RenderEngine::window_create(int width, int height, const char* title) {

@@ -79,7 +79,7 @@ namespace VK {
     }
 
     force_inline void deleteSurface() {
-        deleteSurface(VK::instance, VK::surface);
+        deleteSurface(VK::instance, VK::surface.surface);
     }
 
     force_inline VkDevice createLogicalDevice(VkPhysicalDevice vkPhysicalDevice,
@@ -234,7 +234,7 @@ namespace VK {
     }
 
     force_inline VkPhysicalDevice getBestPhysicalDevice() {
-        return getBestPhysicalDevice(VK::instance, VK::surface);
+        return getBestPhysicalDevice(VK::instance, VK::surface.surface);
     }
 
     force_inline void init() {
@@ -243,5 +243,9 @@ namespace VK {
         VK::createSurface();
         VK::getBestPhysicalDevice();
         VK::queues.getQueueFamilyIndices();
+        VK::device = VK::createLogicalDevice();
+        VK::surface.init();
+        VK::surface.chooseSwapSurfaceFormat();
+        VK::surface.chooseSwapPresentMode();
     }
 }
