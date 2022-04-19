@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.21)
 
-set(PROJECT_NAME v3rse)
-
 option(AUTO_LOCATE_VULKAN "AUTO_LOCATE_VULKAN" ON)
+option(FORCE_FUNC_INLINE "Force function inlining" ON)
 
+set(PROJECT_NAME v3rse)
 if(AUTO_LOCATE_VULKAN)
     # This will return Boolean 'Vulkan_FOUND' indicating the status of find as success(ON) or fail(OFF).
     find_package(Vulkan) # Include directory path - 'Vulkan_INCLUDE_DIRS' and 'Vulkan_LIBRARY' with required libraries.
@@ -40,8 +40,8 @@ else()
 		For more information on correct installation process, please refer to subsection 'Getting started with Lunar-G SDK'
 		and 'Setting up first project with CMake' in Chapter 3, 'Shaking hands with the device' in this book 'Learning Vulkan', ISBN - 9781786469809.")
         return()
-    endif()
-endif()
+    endif ()
+endif ()
 
 message(STATUS "Vulkan library path: ${Vulkan_LIBRARY}")
 
@@ -50,19 +50,41 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_definitions(-DVK_USE_PLATFORM_WIN32_KHR)
 
-link_directories(lib)
-link_directories(${Vulkan_LIBRARY})
+
+#link_directories(lib)
 include_directories(lib/inc)
+
+link_directories(${Vulkan_LIBRARY})
 include_directories(${Vulkan_INCLUDE_DIRS})
+
+# build glfw
+
+#option(GLFW_INSTALL "Generate installation target" ON)
+#option(GLFW_VULKAN_STATIC "Assume the Vulkan loader is linked with the application" ON)
+
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(GLFW_VULKAN_STATIC ON CACHE BOOL "" FORCE)
 
 include_directories(inc)
 
 file(GLOB_RECURSE CPP src/*.cpp)
 file(GLOB_RECURSE H src/*.h)
 
+add_subdirectory(lib/src/glfw-3.3.7)
+
 add_executable(${PROJECT_NAME} ${CPP} ${H})
 
-target_link_libraries(${PROJECT_NAME} PUBLIC glfw3.lib)
+# force vk functions inlining
+if (FORCE_FUNC_INLINE)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC FORCE_INLINE)
+endif ()
+
+target_link_libraries(${PROJECT_NAME} PUBLIC glfw)
+
 target_link_libraries(${PROJECT_NAME} PUBLIC "vulkan-1")
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)

@@ -10,12 +10,11 @@
 
 // TODO: check that the compilers are actually inlining the code and that it actually makes
 //  a difference in performance.
-#ifdef _MSC_VER // msvsc
-    #define _inline __forceinline
-#else
-    #ifdef __GNUG__ // gcc
-        #define _inline __attribute__((always_inline))
-    #else
-        #define _inline inline
-    #endif
+#if !defined(FORCE_INLINE)
+    #define force_inline inline
+#elif defined(_MSC_VER) && defined(FORCE_INLINE) // msvc
+    #define force_inline __forceinline
+#elif defined(__GNUG__) && defined(FORCE_INLINE) // gcc
+    #define force_inline __attribute__((always_inline))
 #endif
+

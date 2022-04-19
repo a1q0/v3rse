@@ -3,10 +3,11 @@
 #include "glfw_vulkan.h"
 #include "logging.h"
 
+#include <cmath>
+
 typedef VkPhysicalDeviceMemoryProperties VkMemoryProperties;
 
 namespace VK {
-
     // - VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT bit specifies that memory allocated with this type is the most efficient
     // for device access. This property will be set if and only if the memory type belongs
     // to a heap with the VK_MEMORY_HEAP_DEVICE_LOCAL_BIT set.
@@ -44,50 +45,60 @@ namespace VK {
     // the VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD, host or device accesses also perform automatic
     // memory domain transfer operations, such that writes are always automatically available
     // and visible to both host and device memory domains.
-    _inline VkMemoryProperties getPhysicalDeviceMemoryProperties(VkPhysicalDevice vkPhysicalDevice) {
+    force_inline VkMemoryProperties getPhysicalDeviceMemoryProperties(VkPhysicalDevice vkPhysicalDevice) {
         VkMemoryProperties vkMemoryProperties;
         vkGetPhysicalDeviceMemoryProperties(vkPhysicalDevice, &vkMemoryProperties);
 
-        for (int i = 0; i < vkMemoryProperties.memoryHeapCount; i++) {
-            info("i: {} -> size: {} bytes, flags: {} ", i, vkMemoryProperties.memoryHeaps[i].size / 2e,
-                 vkMemoryProperties.memoryHeaps[i].flags);
-        }
+        // - VK_MEMORY_HEAP_DEVICE_LOCAL_BIT specifies that the heap corresponds to device-local memory.
+        // Device-local memory may have different performance characteristics than host-local memory,
+        // and may support different memory property flags.
+        // - VK_MEMORY_HEAP_MULTI_INSTANCE_BIT specifies that in a logical device representing more
+        // than one physical device, there is a per-physical device instance of the heap memory.
+        // By default, an allocation from such a heap will be replicated to each physical device’s instance of the heap.
 
-        for (int i = 0; i < vkMemoryProperties.memoryTypeCount; i++) {
-            //info("{} -> {} heap index", i, vkPhysicalDeviceMemoryProperties.memoryTypes->heapIndex);
-            info("i: {} -> heap: {}", i, vkMemoryProperties.memoryTypes[i].heapIndex);
-
-            if (vkMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-                info("VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT");
-            if (vkMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
-                info("VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT");
-            if (vkMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
-                info("VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ");
-            if (vkMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_CACHED_BIT)
-                info("VK_MEMORY_PROPERTY_HOST_CACHED_BIT");
-            if (vkMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT)
-                info("VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT");
-            if (vkMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_PROTECTED_BIT)
-                info("VK_MEMORY_PROPERTY_PROTECTED_BIT");
-            if (vkMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD)
-                info("VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD");
-            if (vkMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD)
-                info("VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD");
-            if (vkMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_RDMA_CAPABLE_BIT_NV)
-                info("VK_MEMORY_PROPERTY_RDMA_CAPABLE_BIT_NV");
-        }
+        //for (int i = 0; i < vkMemoryProperties.memoryHeapCount; i++) {
+        //    info("heap: {} -> size: {} MiB, flags: {} ", i, (vkMemoryProperties.memoryHeaps[i].size / pow(1024, 2)),
+        //         vkMemoryProperties.memoryHeaps[i].flags);
+        //}
+        //
+        //for (int i = 0; i < vkMemoryProperties.memoryTypeCount; i++) {
+        //    info("i: {} -> heap: {}", i, vkMemoryProperties.memoryTypes[i].heapIndex);
+        //
+        //    if (vkMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+        //        info("VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT");
+        //    if (vkMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+        //        info("VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT");
+        //    if (vkMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+        //        info("VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ");
+        //    if (vkMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_CACHED_BIT)
+        //        info("VK_MEMORY_PROPERTY_HOST_CACHED_BIT");
+        //    if (vkMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT)
+        //        info("VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT");
+        //    if (vkMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_PROTECTED_BIT)
+        //        info("VK_MEMORY_PROPERTY_PROTECTED_BIT");
+        //    if (vkMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD)
+        //        info("VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD");
+        //    if (vkMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD)
+        //        info("VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD");
+        //    if (vkMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_RDMA_CAPABLE_BIT_NV)
+        //        info("VK_MEMORY_PROPERTY_RDMA_CAPABLE_BIT_NV");
+        //}
 
         return vkMemoryProperties;
     }
 
-    _inline vector<uint32_t> findMemoryTypes(VkPhysicalDevice vkPhysicalDevice, uint32_t type, uint32_t flags) {
+    force_inline vector<uint32_t>
+    findMemoryTypes(uint32_t type, uint32_t propertyFlags, VkPhysicalDevice vkPhysicalDevice = VK::physicalDevice) {
         VkMemoryProperties vkMemoryProperties = getPhysicalDeviceMemoryProperties(vkPhysicalDevice);
         vector<uint32_t> types;
 
         for (int i = 0; i < vkMemoryProperties.memoryTypeCount; i++) {
-            if ((1 << i) & type && (vkMemoryProperties.memoryHeaps->flags & flags) == flags) types.push_back(i);
+            if ((1 << i) & type && (vkMemoryProperties.memoryTypes->propertyFlags & propertyFlags) == propertyFlags)
+                types.push_back(i);
         }
 
         return types;
     }
+
+
 }

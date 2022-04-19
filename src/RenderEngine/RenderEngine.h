@@ -10,62 +10,6 @@
 
 using glm::vec3;
 
-struct Vertex {
-    vec3 pos;
-    vec3 color;
-
-    static VkVertexInputBindingDescription getBindingDescription() {
-        return VkVertexInputBindingDescription {
-            .binding = 0,
-            .stride = sizeof(Vertex),
-            .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
-        };
-    }
-
-    static array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions(uint32_t binding_id) {
-        return array<VkVertexInputAttributeDescription, 2> {
-            VkVertexInputAttributeDescription {
-                .location = 0,
-                .binding = binding_id,
-                .format = VK_FORMAT_R32G32B32_SFLOAT,
-                .offset = static_cast<uint32_t>(offsetof(Vertex, pos))
-            },
-            VkVertexInputAttributeDescription {
-                .location = 1,
-                .binding = binding_id,
-                .format = VK_FORMAT_R32G32B32_SFLOAT,
-                .offset = static_cast<uint32_t>(offsetof(Vertex, pos))
-            }
-        };
-    }
-
-    static VkBuffer createVertexBuffer(VkDevice vkDevice, const vector<Vertex>& vertices,
-                                       VkSharingMode vkSharingMode) {
-        VkBufferCreateInfo vkBufferCreateInfo {
-            .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-            .pNext{},
-            .flags{},
-            .size = sizeof(vertices[0]) * vertices.size(),
-            .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-            .sharingMode = vkSharingMode,
-            .queueFamilyIndexCount{}, // TODO: maybe this has to be set to the current queue ?
-            .pQueueFamilyIndices{}
-        };
-
-        VkBuffer vkBuffer;
-        vkCreateBuffer(vkDevice, &vkBufferCreateInfo, nullptr, &vkBuffer);
-
-        VkMemoryRequirements vkMemoryRequirements;
-        vkGetBufferMemoryRequirements(vkDevice, vkBuffer, &vkMemoryRequirements);
-
-        info("memory requirements:\nsize: {}\nalignment: {}", vkMemoryRequirements.size,
-             vkMemoryRequirements.alignment);
-
-
-        return vkBuffer;
-    }
-};
-
 namespace RenderEngine {
     inline GLFWwindow* window;
     inline int width = 480;

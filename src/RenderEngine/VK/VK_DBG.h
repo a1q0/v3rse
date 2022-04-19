@@ -3,13 +3,13 @@
 #include "glfw_vulkan.h"
 
 namespace VK {
-    _inline void CHECK(VkResult result, const char* msg = "Vulkan check failed!") {
+    force_inline void CHECK(VkResult result, const char* msg = "Vulkan check failed!") {
         if (result != VK_SUCCESS) throw std::runtime_error(msg);
     }
 
     VkDebugUtilsMessengerEXT vkDebugUtilsMessengerEXT;
 
-    _inline bool supportsLayers(vector<const char*> layers);
+    force_inline bool supportsLayers(vector<const char*> layers);
 
 
     VkBool32 debugCallbackDefault(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -36,13 +36,19 @@ namespace VK {
         .pfnUserCallback = debugCallback,
     };
 
-    _inline bool createDebugMessenger(VkInstance vkInstance,
-                                      VkDebugUtilsMessengerCreateInfoEXT vkDebugUtilsMessengerCreateInfoEXT = vkDefaultDebugUtilsMessengerCreateInfoEXT) {
+    force_inline bool createDebugMessenger(VkInstance vkInstance,
+                                           VkDebugUtilsMessengerCreateInfoEXT vkDebugUtilsMessengerCreateInfoEXT = vkDefaultDebugUtilsMessengerCreateInfoEXT) {
         return CreateDebugUtilsMessengerEXT(vkInstance, &vkDebugUtilsMessengerCreateInfoEXT, nullptr,
                                             &vkDebugUtilsMessengerEXT);
     }
 
-    _inline void deleteDebugMessenger(VkInstance vkInstance) {
+    force_inline bool createDebugMessenger(
+        VkDebugUtilsMessengerCreateInfoEXT vkDebugUtilsMessengerCreateInfoEXT = vkDefaultDebugUtilsMessengerCreateInfoEXT) {
+        return CreateDebugUtilsMessengerEXT(VK::instance, &vkDebugUtilsMessengerCreateInfoEXT, nullptr,
+                                            &vkDebugUtilsMessengerEXT);
+    }
+
+    force_inline void deleteDebugMessenger(VkInstance vkInstance) {
         DestroyDebugUtilsMessengerEXT(vkInstance, vkDebugUtilsMessengerEXT, nullptr);
     }
 }
