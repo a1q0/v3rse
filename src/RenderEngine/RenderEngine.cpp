@@ -38,11 +38,13 @@ void RenderEngine::init() {
 
     VK::renderPass.createRenderPass();
     VK::pipeline.createGraphicsPipeline();
+    VK::queues.init();
 
-    swapchain_framebuffers.resize(swapchain_images.size());
-    for (int i = 0; i < swapchain_images.size(); i++) {
-        swapchain_framebuffers[i] = VK::createFramebuffer(VK::device, renderPass, extent.width, extent.height,
-                                                          {swapchain_images_view[i]});
+    VK::surface.swapchain.swapchain_framebuffers.resize(VK::surface.swapchain.images.size());
+    for (int i = 0; i < VK::surface.swapchain.images.size(); i++) {
+        VK::surface.swapchain.swapchain_framebuffers[i] = VK::createFramebuffer(VK::device, renderPass, extent.width,
+                                                                                extent.height,
+                                                                                {swapchain_images_view[i]});
     }
 
     commandPool = VK::createCommandPool(VK::device, queueFamilyIndices);
@@ -98,7 +100,7 @@ void RenderEngine::frame() {
     vkWaitForFences(VK::device, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
 
     uint32_t imageIndex;
-    VkResult result_acquireNextImage = vkAcquireNextImageKHR(VK::device, swapchain, UINT64_MAX,
+    VkResult result_acquireNextImage = vkAcquireNextImageKHR(VK::device, VK::surface.swapchain.swapchain, UINT64_MAX,
                                                              imageAvailableSemaphores,
                                                              VK_NULL_HANDLE, &imageIndex);
     if (result_acquireNextImage == VK_ERROR_OUT_OF_DATE_KHR) {
@@ -109,8 +111,8 @@ void RenderEngine::frame() {
     vkResetFences(VK::device, 1, &inFlightFence);
 
     vkResetCommandBuffer(commandBuffer, 0); /*VkCommandBufferResetFlagBits*/
-    VK::recordCommandBuffer(commandBuffer, renderPass, swapchain_framebuffers[imageIndex],
-                            swapchain_images_extent, pipeline);
+    VK::recordCommandBuffer(commandBuffer, renderPass, VK::surface.swapchain.swapchain_framebuffers[imageIndex],
+                            VK::surface.extent, pipeline);
 
     VkPipelineStageFlags stageFlags[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
     VkSubmitInfo submitInfo {
@@ -133,7 +135,7 @@ void RenderEngine::frame() {
         .waitSemaphoreCount = 1,
         .pWaitSemaphores = &renderFinishedSemaphores,
         .swapchainCount = 1,
-        .pSwapchains = &swapchain,
+        .pSwapchains = &VK::surface.swapchain.swapchain,
         .pImageIndices = &imageIndex,
         .pResults{}
     };
@@ -147,17 +149,16 @@ void RenderEngine::exit() {
     vkDestroySemaphore(VK::device, renderFinishedSemaphores, nullptr);
     vkDestroySemaphore(VK::device, imageAvailableSemaphores, nullptr);
 
-    for (const auto& f: swapchain_framebuffers) {
+    for (const auto& f: VK::surface.swapchain.swapchain_framebuffers) {
         VK::deleteFramebuffer(VK::device, f);
     }
 
-    VK::swapchain.destroy();
+    VK::surface.destroy();
 
     VK::deleteCommandPool(VK::device, commandPool);
     VK::renderPass.deleteRenderPass(VK::device, renderPass);
-    VK::deletePipelineLayout(VK::device, pipelineLayout);
+    VK::pipeline.deletePipelineLayout(VK::device, pipelineLayout);
     VK::pipeline.deletePipeline(VK::device, pipeline);
-    VK::deleteSwapchain(VK::device, swapchain);
     VK::surface.destroy();
     VK::deleteLogicalDevice();
     VK::deleteInstance();
