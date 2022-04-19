@@ -36,9 +36,6 @@ void RenderEngine::init() {
 
     VK::surface.swapchain.createSwapchain(width, height);
 
-
-    VK::swapchain.create();
-
     VK::renderPass.createRenderPass();
     VK::pipeline.createGraphicsPipeline();
 
