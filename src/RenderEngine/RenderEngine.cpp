@@ -40,8 +40,8 @@ void RenderEngine::init() {
     VK::pipeline.createGraphicsPipeline();
     VK::queues.init();
 
-    VK::surface.swapchain.swapchain_framebuffers.resize(VK::surface.swapchain.images.size());
-    for (int i = 0; i < VK::surface.swapchain.images.size(); i++) {
+    VK::surface.swapchain.swapchain_framebuffers.resize(VK::surface.swapchain.frames.size());
+    for (int i = 0; i < VK::surface.swapchain.frames.size(); i++) {
         VK::surface.swapchain.swapchain_framebuffers[i] = VK::createFramebuffer(VK::device, renderPass, extent.width,
                                                                                 extent.height,
                                                                                 {swapchain_images_view[i]});

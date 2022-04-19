@@ -23,7 +23,8 @@
 
 namespace VK {
 
-    struct Image {
+    class Image {
+    public:
         VkImage image;
         VkFormat format;
         VkExtent2D extent;
@@ -31,7 +32,7 @@ namespace VK {
         VkImageView view;
 
         static force_inline VkImageView
-        createImageView(VkDevice vkDevice, VkImage image, VkFormat format, VkImageAspectFlags aspectFlags) {
+        createView(VkDevice vkDevice, VkImage image, VkFormat format, VkImageAspectFlags aspectFlags) {
             VkImageViewCreateInfo vkImageViewCreateInfo {
                 .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
                 .pNext = nullptr,
@@ -59,13 +60,15 @@ namespace VK {
             return imageView;
         }
 
-        static force_inline void deleteImageView(VkDevice vkDevice, VkImageView vkImageView) {
-            vkDestroyImageView(vkDevice, vkImageView, nullptr);
+        force_inline void destroy() {
+            vkDestroyImageView(device, view, nullptr);
+            vkDestroyImage(device, image, nullptr);
         }
+    };
 
-        static force_inline void deleteImage(VkDevice vkDevice, VkImage vkImage) {
-            vkDestroyImage(vkDevice, vkImage, nullptr);
-        }
+    class SwapchainImage : Image {
+        vector<VkFramebuffer> framebuffer;
+
     };
 
     struct Queue {
@@ -93,20 +96,14 @@ namespace VK {
             return set<uint32_t> {graphics.id.value(), present.id.value()};
         }
 
-        static force_inline vector<VkQueueFamilyProperties>
-        getQueueFamilyProperties(VkPhysicalDevice vkPhysicalDevice) {
-            uint32_t count;
-            vkGetPhysicalDeviceQueueFamilyProperties(vkPhysicalDevice, &count, nullptr);
-            vector<VkQueueFamilyProperties> queueFamilyProperties(count);
-            vkGetPhysicalDeviceQueueFamilyProperties(vkPhysicalDevice, &count, queueFamilyProperties.data());
-            return queueFamilyProperties;
-        }
-
         // select the first queue that has present & graphics abilities
         force_inline void getQueueFamilyIndices(VkPhysicalDevice vkPhysicalDevice, VkSurfaceKHR vkSurface,
                                                 vector<VkQueueFamilyProperties> vkQueueFamilyProperties =
                                                 vector<VkQueueFamilyProperties> {0}) {
-            if (vkQueueFamilyProperties.empty()) vkQueueFamilyProperties = getQueueFamilyProperties(vkPhysicalDevice);
+            uint32_t count;
+            vkGetPhysicalDeviceQueueFamilyProperties(vkPhysicalDevice, &count, nullptr);
+            vector<VkQueueFamilyProperties> queueFamilyProperties(count);
+            vkGetPhysicalDeviceQueueFamilyProperties(vkPhysicalDevice, &count, queueFamilyProperties.data());
 
             int i = 0;
             for (const auto& queueFamily: vkQueueFamilyProperties) {
@@ -120,9 +117,10 @@ namespace VK {
             }
         }
 
-        force_inline void getQueueFamilyIndices(vector<VkQueueFamilyProperties> vkQueueFamilyProperties =
+        force_inline void
+        getQueueFamilyIndices(VkSurfaceKHR vkSurfaceKHR, vector<VkQueueFamilyProperties> vkQueueFamilyProperties =
         vector<VkQueueFamilyProperties> {0}) {
-            getQueueFamilyIndices(physicalDevice, surface.surface, vkQueueFamilyProperties);
+            getQueueFamilyIndices(physicalDevice, vkSurfaceKHR, vkQueueFamilyProperties);
         }
 
         force_inline vector<VkDeviceQueueCreateInfo> getQueueCreateInfos() {
@@ -276,29 +274,33 @@ namespace VK {
         return vkDescriptorSetLayout;
     }
 
-    force_inline VkFramebuffer
-    createFramebuffer(VkDevice vkDevice, VkRenderPass vkRenderPass, uint32_t width, uint32_t height,
-                      vector<VkImageView> vkImageViews) {
-        VkFramebufferCreateInfo framebufferInfo {
-            .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-            .pNext{},
-            .flags{},
-            .renderPass = vkRenderPass,
-            .attachmentCount = static_cast<uint32_t>(vkImageViews.size()),
-            .pAttachments = vkImageViews.data(),
-            .width = width,
-            .height = height,
-            .layers = 1
-        };
+    class Framebuffer {
+        force_inline VkFramebuffer
+        createFramebuffer(VkDevice vkDevice, VkRenderPass vkRenderPass, uint32_t width, uint32_t height,
+                          vector<VkImageView> vkImageViews) {
+            VkFramebufferCreateInfo framebufferInfo {
+                .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+                .pNext{},
+                .flags{},
+                .renderPass = vkRenderPass,
+                .attachmentCount = static_cast<uint32_t>(vkImageViews.size()),
+                .pAttachments = vkImageViews.data(),
+                .width = width,
+                .height = height,
+                .layers = 1
+            };
 
-        VkFramebuffer vkFramebuffer;
-        vkCreateFramebuffer(vkDevice, &framebufferInfo, nullptr, &vkFramebuffer);
-        return vkFramebuffer;
-    }
+            VkFramebuffer vkFramebuffer;
+            vkCreateFramebuffer(vkDevice, &framebufferInfo, nullptr, &vkFramebuffer);
+            return vkFramebuffer;
+        }
 
-    force_inline void deleteFramebuffer(VkDevice vkDevice, VkFramebuffer vkFramebuffer) {
-        vkDestroyFramebuffer(vkDevice, vkFramebuffer, nullptr);
-    }
+        force_inline void deleteFramebuffer(VkDevice vkDevice, VkFramebuffer vkFramebuffer) {
+            vkDestroyFramebuffer(vkDevice, vkFramebuffer, nullptr);
+        }
+
+    };
+
 
     class Surface {
     public:
@@ -311,6 +313,27 @@ namespace VK {
         VkPresentModeKHR vkPresentMode {};
 
         VkExtent2D extent {};
+
+        force_inline VkSurfaceKHR createSurface(VkInstance vkInstance, GLFWwindow* window) {
+            VkWin32SurfaceCreateInfoKHR vkCreateInfo = {};
+            vkCreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+            vkCreateInfo.hwnd = glfwGetWin32Window(window);
+            vkCreateInfo.hinstance = GetModuleHandle(nullptr);
+
+            /*if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) { throw std::runtime_error("failed to create window surface!"); }*/
+            VkSurfaceKHR vkSurface;
+            vkCreateWin32SurfaceKHR(vkInstance, &vkCreateInfo, nullptr, &vkSurface);
+
+            return vkSurface;
+        }
+
+        force_inline VkSurfaceKHR create() {
+            return createSurface(VK::instance, VK::window);
+        }
+
+        force_inline void destroy() const {
+            vkDestroySurfaceKHR(VK::instance, surface, nullptr);
+        }
 
         static force_inline vector<VkSurfaceFormatKHR>
         enumerateSurfaceFormats(VkPhysicalDevice vkDevice, VkSurfaceKHR vkSurface) {
@@ -359,6 +382,12 @@ namespace VK {
             return vkSurfaceFormat = availableFormats[0];
         }
 
+        force_inline VkSurfaceFormatKHR chooseSwapSurfaceFormat(VkFormat format = VK_FORMAT_B8G8R8A8_SRGB,
+                                                                VkColorSpaceKHR colorSpace
+                                                                = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+            return chooseSwapSurfaceFormat(vkSurfaceFormats, format, colorSpace);
+        }
+
         force_inline VkPresentModeKHR chooseSwapPresentMode(VkPresentModeKHR mode = VK_PRESENT_MODE_MAILBOX_KHR) {
 
             for (const auto& availablePresentMode: enumeratePresentModes()) {
@@ -390,6 +419,8 @@ namespace VK {
             vkSurfaceCapabilities = getSurfaceCapabilities(physicalDevice, surface);
             vkSurfaceFormats = enumerateSurfaceFormats(physicalDevice, surface);
             vkPresentModes = enumeratePresentModes(physicalDevice, surface);
+            chooseSwapSurfaceFormat();
+            chooseSwapPresentMode();
             swapchain.surface = this;
 
         }
@@ -398,8 +429,7 @@ namespace VK {
             Surface* surface = nullptr;
             VkSwapchainKHR swapchain = nullptr;
 
-            vector<VkFramebuffer> swapchain_framebuffers;
-            vector<Image> images;
+            vector<Image> frames;
 
             VkSwapchainKHR createSwapchain(VkPhysicalDevice vkPhysicalDevice, VkDevice vkDevice,
                                            VkSurfaceKHR vkSurface, uint32_t width, uint32_t height,
@@ -459,11 +489,11 @@ namespace VK {
                 vector<VkImage> vkImages(count);
                 vkGetSwapchainImagesKHR(vkDevice, swapchain, &count, vkImages.data());
 
-                images.resize(count);
-                for (int i = 0; i < images.size(); i++) {
-                    images[i].image = vkImages[i];
-                    images[i].view = VK::Image::createImageView(VK::device, images[i].image, images[i].format,
-                                                                VK_IMAGE_ASPECT_COLOR_BIT);
+                frames.resize(count);
+                for (int i = 0; i < frames.size(); i++) {
+                    frames[i].image = vkImages[i];
+                    frames[i].view = VK::Image::createView(VK::device, frames[i].image, frames[i].format,
+                                                           VK_IMAGE_ASPECT_COLOR_BIT);
                 }
             }
 
@@ -474,7 +504,7 @@ namespace VK {
             void destroy() {
                 vkDestroySwapchainKHR(device, swapchain, nullptr);
 
-                for (const auto& iv: images) {
+                for (const auto& iv: frames) {
                     //VK::image.deleteImageView(VK::device, iv);
                 }
             }
@@ -792,31 +822,6 @@ namespace VK {
         deleteInstance(VK::instance);
     }
 
-    force_inline VkSurfaceKHR createSurface(VkInstance vkInstance, GLFWwindow* window) {
-        VkWin32SurfaceCreateInfoKHR vkCreateInfo = {};
-        vkCreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-        vkCreateInfo.hwnd = glfwGetWin32Window(window);
-        vkCreateInfo.hinstance = GetModuleHandle(nullptr);
-
-        /*if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) { throw std::runtime_error("failed to create window surface!"); }*/
-        VkSurfaceKHR vkSurface;
-        vkCreateWin32SurfaceKHR(vkInstance, &vkCreateInfo, nullptr, &vkSurface);
-
-        return vkSurface;
-    }
-
-    force_inline VkSurfaceKHR createSurface() {
-        return createSurface(VK::instance, VK::window);
-    }
-
-    force_inline void deleteSurface(VkInstance vkInstance, VkSurfaceKHR vkSurface) {
-        vkDestroySurfaceKHR(vkInstance, vkSurface, nullptr);
-    }
-
-    force_inline void deleteSurface() {
-        deleteSurface(VK::instance, VK::surface.surface);
-    }
-
     force_inline VkDevice createLogicalDevice(VkPhysicalDevice vkPhysicalDevice,
                                               vector<VkDeviceQueueCreateInfo> queueCreateInfos,
                                               vector<const char*> extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME},
@@ -975,12 +980,10 @@ namespace VK {
     force_inline void init() {
         VK::createInstance();
         VK::createDebugMessenger();
-        VK::createSurface();
+        VK::surface.create();
         VK::getBestPhysicalDevice();
-        VK::queues.getQueueFamilyIndices();
+        VK::queues.getQueueFamilyIndices(surface.surface);
         VK::device = VK::createLogicalDevice();
         VK::surface.init();
-        VK::surface.chooseSwapSurfaceFormat();
-        VK::surface.chooseSwapPresentMode();
     }
 };
