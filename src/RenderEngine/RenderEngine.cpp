@@ -40,12 +40,9 @@ void RenderEngine::init() {
     VK::pipeline.createGraphicsPipeline();
     VK::queues.init();
 
-    VK::surface.swapchain.swapchain_framebuffers.resize(VK::surface.swapchain.frames.size());
-    for (int i = 0; i < VK::surface.swapchain.frames.size(); i++) {
-        VK::surface.swapchain.swapchain_framebuffers[i] = VK::createFramebuffer(VK::device, renderPass,
-                                                                                VK::surface.extent.width,
-                                                                                VK::surface.extent.width,
-                                                                                {swapchain_images_view[i]});
+    for (const auto& f: VK::surface.swapchain.frames) {
+        f.framebuffer.create(VK::renderPass.renderPass, VK::surface.extent.width,
+                             VK::surface.extent.height, f.view);
     }
 
     commandPool = VK::createCommandPool(VK::device, VK::queues);
@@ -112,7 +109,7 @@ void RenderEngine::frame() {
     vkResetFences(VK::device, 1, &inFlightFence);
 
     vkResetCommandBuffer(commandBuffer, 0); /*VkCommandBufferResetFlagBits*/
-    VK::recordCommandBuffer(commandBuffer, renderPass, VK::surface.swapchain.swapchain_framebuffers[imageIndex],
+    VK::recordCommandBuffer(commandBuffer, renderPass, VK::surface.swapchain.frames[imageIndex].framebuffer.framebuffer,
                             VK::surface.extent, pipeline);
 
     VkPipelineStageFlags stageFlags[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
@@ -150,8 +147,8 @@ void RenderEngine::exit() {
     vkDestroySemaphore(VK::device, renderFinishedSemaphores, nullptr);
     vkDestroySemaphore(VK::device, imageAvailableSemaphores, nullptr);
 
-    for (const auto& f: VK::surface.swapchain.swapchain_framebuffers) {
-        VK::deleteFramebuffer(VK::device, f);
+    for (const auto& f: VK::surface.swapchain.frames) {
+        f.framebuffer.destroy();
     }
 
     VK::surface.destroy();

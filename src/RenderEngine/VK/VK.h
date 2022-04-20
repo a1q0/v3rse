@@ -23,21 +23,54 @@
 
 namespace VK {
 
-    class VKO {
-    public:
-        void* handle = nullptr;
+//    class VKO {
+//    public:
+//        void* handle = nullptr;
+//
+//        VKO(void* handle) {
+//            this->handle = handle;
+//            info("hello");
+//        }
+//
+//        VKO(void) {
+//            this->create();
+//        }
+//
+//        force_inline virtual void create() = 0;
+//
+//        force_inline virtual void destroy() = 0;
+//    };
 
-        VKO(void* handle) {
-            this->handle = handle;
-            info("hello");
+    class Framebuffer {
+    public:
+        VkFramebuffer framebuffer;
+
+        force_inline VkFramebuffer
+        create(VkRenderPass vkRenderPass, uint32_t width, uint32_t height,
+               vector<VkImageView> attachments) {
+            VkFramebufferCreateInfo framebufferInfo {
+                .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+                .pNext{},
+                .flags{},
+                .renderPass = vkRenderPass,
+                .attachmentCount = static_cast<uint32_t>(attachments.size()),
+                .pAttachments = attachments.data(),
+                .width = width,
+                .height = height,
+                .layers = 1
+            };
+
+            vkCreateFramebuffer(VK::device, &framebufferInfo, nullptr, &framebuffer);
+            return framebuffer;
         }
 
-        virtual void create() = 0;
-
-        virtual void destroy() = 0;
+        force_inline void destroy() {
+            vkDestroyFramebuffer(VK::device, framebuffer, nullptr);
+        }
     };
 
-    class Image : public VKO {
+
+    class Image {
     public:
         VkImage image {};
         VkFormat format {};
@@ -73,15 +106,16 @@ namespace VK {
             return imageView;
         }
 
+
         force_inline void destroy() const {
             vkDestroyImageView(device, view, nullptr);
             vkDestroyImage(device, image, nullptr);
         }
     };
 
-    class Frame : Image {
+    class Frame : public Image {
     public:
-
+        Framebuffer framebuffer {};
     };
 
 
@@ -274,40 +308,12 @@ namespace VK {
         return vkDescriptorSetLayout;
     }
 
-    class Framebuffer {
-        force_inline VkFramebuffer
-        createFramebuffer(VkDevice vkDevice, VkRenderPass vkRenderPass, uint32_t width, uint32_t height,
-                          vector<VkImageView> vkImageViews) {
-            VkFramebufferCreateInfo framebufferInfo {
-                .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-                .pNext{},
-                .flags{},
-                .renderPass = vkRenderPass,
-                .attachmentCount = static_cast<uint32_t>(vkImageViews.size()),
-                .pAttachments = vkImageViews.data(),
-                .width = width,
-                .height = height,
-                .layers = 1
-            };
-
-            VkFramebuffer vkFramebuffer;
-            vkCreateFramebuffer(vkDevice, &framebufferInfo, nullptr, &vkFramebuffer);
-            return vkFramebuffer;
-        }
-
-        force_inline void deleteFramebuffer(VkDevice vkDevice, VkFramebuffer vkFramebuffer) {
-            vkDestroyFramebuffer(vkDevice, vkFramebuffer, nullptr);
-        }
-
-    };
-
-
     class Surface {
     public:
         VkSurfaceKHR surface = nullptr;
         VkSurfaceCapabilitiesKHR vkSurfaceCapabilities {};
-        vector<VkSurfaceFormatKHR> vkSurfaceFormats;
-        vector<VkPresentModeKHR> vkPresentModes;
+        vector<VkSurfaceFormatKHR> surfaceFormats;
+        vector<VkPresentModeKHR> presentModes;
 
         VkSurfaceFormatKHR vkSurfaceFormat {};
         VkPresentModeKHR vkPresentMode {};
@@ -335,39 +341,22 @@ namespace VK {
             vkDestroySurfaceKHR(VK::instance, surface, nullptr);
         }
 
-        static force_inline vector<VkSurfaceFormatKHR>
-        enumerateSurfaceFormats(VkPhysicalDevice vkDevice, VkSurfaceKHR vkSurface) {
+        force_inline void enumerateSurfaceFormats() {
             uint32_t count;
-            vkGetPhysicalDeviceSurfaceFormatsKHR(vkDevice, vkSurface, &count, nullptr);
-            vector<VkSurfaceFormatKHR> surfaceFormats(count);
-            if (count != 0) vkGetPhysicalDeviceSurfaceFormatsKHR(vkDevice, vkSurface, &count, surfaceFormats.data());
-            return surfaceFormats;
+            vkGetPhysicalDeviceSurfaceFormatsKHR(VK::physicalDevice, surface, &count, nullptr);
+            surfaceFormats.resize(count);
+            if (count != 0)
+                vkGetPhysicalDeviceSurfaceFormatsKHR(VK::physicalDevice, surface, &count, surfaceFormats.data());
         }
 
-        static force_inline vector<VkPresentModeKHR>
-        enumeratePresentModes(VkPhysicalDevice vkDevice, VkSurfaceKHR vkSurface) {
+        force_inline void enumeratePresentModes() {
             uint32_t count;
-            vkGetPhysicalDeviceSurfacePresentModesKHR(vkDevice, vkSurface, &count, nullptr);
-            vector<VkPresentModeKHR> presentModes(count);
-            if (count != 0) vkGetPhysicalDeviceSurfacePresentModesKHR(vkDevice, vkSurface, &count, presentModes.data());
-
-            return presentModes;
+            vkGetPhysicalDeviceSurfacePresentModesKHR(VK::physicalDevice, surface, &count, nullptr);
+            presentModes.resize(count);
+            if (count != 0)
+                vkGetPhysicalDeviceSurfacePresentModesKHR(VK::physicalDevice, surface, &count, presentModes.data());
         }
 
-        [[nodiscard]] force_inline vector<VkPresentModeKHR> enumeratePresentModes() const {
-            enumeratePresentModes(physicalDevice, surface);
-        }
-
-        static force_inline VkSurfaceCapabilitiesKHR
-        getSurfaceCapabilities(VkPhysicalDevice vkDevice, VkSurfaceKHR vkSurface) {
-            VkSurfaceCapabilitiesKHR vkSurfaceCapabilitiesKHR;
-            vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vkDevice, vkSurface, &vkSurfaceCapabilitiesKHR);
-            return vkSurfaceCapabilitiesKHR;
-        }
-
-        [[nodiscard]] force_inline VkSurfaceCapabilitiesKHR getSurfaceCapabilities() const {
-            getSurfaceCapabilities(physicalDevice, surface);
-        }
 
         force_inline VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats,
                                                                 VkFormat format = VK_FORMAT_B8G8R8A8_SRGB,
@@ -385,12 +374,12 @@ namespace VK {
         force_inline VkSurfaceFormatKHR chooseSwapSurfaceFormat(VkFormat format = VK_FORMAT_B8G8R8A8_SRGB,
                                                                 VkColorSpaceKHR colorSpace
                                                                 = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-            return chooseSwapSurfaceFormat(vkSurfaceFormats, format, colorSpace);
+            return chooseSwapSurfaceFormat(surfaceFormats, format, colorSpace);
         }
 
         force_inline VkPresentModeKHR chooseSwapPresentMode(VkPresentModeKHR mode = VK_PRESENT_MODE_MAILBOX_KHR) {
 
-            for (const auto& availablePresentMode: enumeratePresentModes()) {
+            for (const auto& availablePresentMode: presentModes) {
                 if (availablePresentMode == mode) {
                     return vkPresentMode = availablePresentMode;
                 }
@@ -416,9 +405,9 @@ namespace VK {
         }
 
         force_inline void init() {
-            vkSurfaceCapabilities = getSurfaceCapabilities(physicalDevice, surface);
-            vkSurfaceFormats = enumerateSurfaceFormats(physicalDevice, surface);
-            vkPresentModes = enumeratePresentModes(physicalDevice, surface);
+            vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VK::physicalDevice, surface, &vkSurfaceCapabilities);
+            enumerateSurfaceFormats();
+            enumeratePresentModes();
             chooseSwapSurfaceFormat();
             chooseSwapPresentMode();
             swapchain.surface = this;
@@ -429,7 +418,7 @@ namespace VK {
             Surface* surface = nullptr;
             VkSwapchainKHR swapchain = nullptr;
 
-            vector<Image> frames;
+            vector<Frame> frames;
 
             VkSwapchainKHR createSwapchain(VkPhysicalDevice vkPhysicalDevice, VkDevice vkDevice,
                                            VkSurfaceKHR vkSurface, uint32_t width, uint32_t height,
@@ -483,11 +472,11 @@ namespace VK {
                                        surface->vkPresentMode);
             }
 
-            force_inline void create(VkDevice vkDevice) {
+            force_inline void create() {
                 uint32_t count;
-                vkGetSwapchainImagesKHR(vkDevice, swapchain, &count, nullptr);
+                vkGetSwapchainImagesKHR(VK::device, swapchain, &count, nullptr);
                 vector<VkImage> vkImages(count);
-                vkGetSwapchainImagesKHR(vkDevice, swapchain, &count, vkImages.data());
+                vkGetSwapchainImagesKHR(VK::device, swapchain, &count, vkImages.data());
 
                 frames.resize(count);
                 for (int i = 0; i < frames.size(); i++) {
@@ -495,10 +484,6 @@ namespace VK {
                     frames[i].view = VK::Image::createView(VK::device, frames[i].image, frames[i].format,
                                                            VK_IMAGE_ASPECT_COLOR_BIT);
                 }
-            }
-
-            force_inline void create() {
-                create(device);
             }
 
             void destroy() {
@@ -517,10 +502,9 @@ namespace VK {
     } surface;
 
     struct RenderPass {
-
         VkRenderPass renderPass;
 
-        force_inline VkRenderPass createRenderPass(VkDevice vkDevice, VkFormat vkFormat) {
+        force_inline void createRenderPass(VkFormat vkFormat) {
             VkAttachmentDescription colorAttachment {
                 .flags{},
                 .format = vkFormat,
@@ -573,11 +557,7 @@ namespace VK {
                 .pDependencies = &vkSubpassDependency,
             };
 
-            vkCreateRenderPass(vkDevice, &renderPassInfo, nullptr, &renderPass);
-        }
-
-        force_inline VkRenderPass createRenderPass() {
-            createRenderPass(device, surface.vkSurfaceFormat.format);
+            vkCreateRenderPass(VK::device, &renderPassInfo, nullptr, &renderPass);
         }
 
         force_inline void deleteRenderPass(VkDevice vkDevice, VkRenderPass vkRenderPass) {
@@ -590,8 +570,7 @@ namespace VK {
         VkPipelineLayout layout;
         VkPipeline pipeline;
 
-        force_inline VkPipeline createGraphicsPipeline(VkDevice vkDevice, VkExtent2D extent, VkRenderPass vkRenderPass,
-                                                       VkPipelineLayout& vkPipelineLayout, VkPipeline& vkPipeline) {
+        force_inline void createGraphicsPipeline(VkDevice vkDevice, VkExtent2D extent, VkRenderPass vkRenderPass) {
             auto vertShaderCode = readFile("dat/shaders/default.vert.glsl.spv");
             auto fragShaderCode = readFile("dat/shaders/default.frag.glsl.spv");
 
@@ -724,7 +703,7 @@ namespace VK {
                 .pPushConstantRanges{},
             };
 
-            vkCreatePipelineLayout(vkDevice, &pipelineLayoutInfo, nullptr, &vkPipelineLayout);
+            vkCreatePipelineLayout(vkDevice, &pipelineLayoutInfo, nullptr, &layout);
 
             VkGraphicsPipelineCreateInfo pipelineCreateInfo {
                 .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
@@ -741,24 +720,22 @@ namespace VK {
                 .pDepthStencilState = &depthStencil,
                 .pColorBlendState = &colorBlending,
                 .pDynamicState{},
-                .layout = vkPipelineLayout,
+                .layout = layout,
                 .renderPass = vkRenderPass,
                 .subpass = 0,
                 .basePipelineHandle = VK_NULL_HANDLE,
                 .basePipelineIndex{}
             };
 
-            CHECK(vkCreateGraphicsPipelines(vkDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &vkPipeline),
+            CHECK(vkCreateGraphicsPipelines(vkDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &pipeline),
                   "failed to create graphics pipeline.");
 
             vkDestroyShaderModule(vkDevice, fragShaderModule, nullptr);
             vkDestroyShaderModule(vkDevice, vertShaderModule, nullptr);
-
-            return vkPipeline;
         }
 
         force_inline VkPipeline createGraphicsPipeline() {
-            createGraphicsPipeline(device, surface.extent, renderPass.renderPass, layout, pipeline);
+            createGraphicsPipeline(device, surface.extent, renderPass.renderPass);
         }
 
         force_inline void deletePipelineLayout(VkDevice vkDevice, VkPipelineLayout vkPipelineLayout) {
@@ -912,7 +889,7 @@ namespace VK {
         bool extensionsSupported = supportsExtensions(vkPhysicalDevice, {VK_KHR_SWAPCHAIN_EXTENSION_NAME});
         bool swapChainAdequate = false;
         if (extensionsSupported) {
-            swapChainAdequate = !surface.vkSurfaceFormats.empty() && !surface.vkPresentModes.empty();
+            swapChainAdequate = !surface.surfaceFormats.empty() && !surface.presentModes.empty();
         }
 
         VkPhysicalDeviceFeatures supportedFeatures;
