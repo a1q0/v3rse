@@ -23,13 +23,26 @@
 
 namespace VK {
 
-    class Image {
+    class VKO {
     public:
-        VkImage image;
-        VkFormat format;
-        VkExtent2D extent;
+        void* handle = nullptr;
 
-        VkImageView view;
+        VKO(void* handle) {
+            this->handle = handle;
+            info("hello");
+        }
+
+        virtual void create() = 0;
+
+        virtual void destroy() = 0;
+    };
+
+    class Image : public VKO {
+    public:
+        VkImage image {};
+        VkFormat format {};
+        VkExtent2D extent {};
+        VkImageView view {};
 
         static force_inline VkImageView
         createView(VkDevice vkDevice, VkImage image, VkFormat format, VkImageAspectFlags aspectFlags) {
@@ -60,16 +73,17 @@ namespace VK {
             return imageView;
         }
 
-        force_inline void destroy() {
+        force_inline void destroy() const {
             vkDestroyImageView(device, view, nullptr);
             vkDestroyImage(device, image, nullptr);
         }
     };
 
-    class SwapchainImage : Image {
-        vector<VkFramebuffer> framebuffer;
+    class Frame : Image {
+    public:
 
     };
+
 
     struct Queue {
         std::optional<uint32_t> id;
@@ -139,20 +153,6 @@ namespace VK {
             }
 
             return vkDeviceQueueCreateInfos;
-        }
-
-        force_inline void printQueueFamilies(VkPhysicalDevice vkPhysicalDevice) {
-            int i = 0;
-            for (const auto& a: Queues::getQueueFamilyProperties(vkPhysicalDevice)) {
-                info("family {}, queue count: {}", i, a.queueCount);
-
-                if (VK_QUEUE_GRAPHICS_BIT & a.queueFlags) info("graphics !");
-                if (VK_QUEUE_COMPUTE_BIT & a.queueFlags) info("compute !");
-                if (VK_QUEUE_TRANSFER_BIT & a.queueFlags) info("transfer !");
-                if (VK_QUEUE_SPARSE_BINDING_BIT & a.queueFlags) info("sparse !");
-
-                i++;
-            }
         }
     } queues;
 

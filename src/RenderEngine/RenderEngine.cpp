@@ -42,12 +42,13 @@ void RenderEngine::init() {
 
     VK::surface.swapchain.swapchain_framebuffers.resize(VK::surface.swapchain.frames.size());
     for (int i = 0; i < VK::surface.swapchain.frames.size(); i++) {
-        VK::surface.swapchain.swapchain_framebuffers[i] = VK::createFramebuffer(VK::device, renderPass, extent.width,
-                                                                                extent.height,
+        VK::surface.swapchain.swapchain_framebuffers[i] = VK::createFramebuffer(VK::device, renderPass,
+                                                                                VK::surface.extent.width,
+                                                                                VK::surface.extent.width,
                                                                                 {swapchain_images_view[i]});
     }
 
-    commandPool = VK::createCommandPool(VK::device, queueFamilyIndices);
+    commandPool = VK::createCommandPool(VK::device, VK::queues);
 
     VkCommandBufferAllocateInfo allocInfo {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -154,7 +155,6 @@ void RenderEngine::exit() {
     }
 
     VK::surface.destroy();
-
     VK::deleteCommandPool(VK::device, commandPool);
     VK::renderPass.deleteRenderPass(VK::device, renderPass);
     VK::pipeline.deletePipelineLayout(VK::device, pipelineLayout);
