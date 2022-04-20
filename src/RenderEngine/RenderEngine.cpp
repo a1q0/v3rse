@@ -40,9 +40,9 @@ void RenderEngine::init() {
     VK::pipeline.createGraphicsPipeline();
     VK::queues.init();
 
-    for (const auto& f: VK::surface.swapchain.frames) {
+    for (auto& f: VK::surface.swapchain.frames) {
         f.framebuffer.create(VK::renderPass.renderPass, VK::surface.extent.width,
-                             VK::surface.extent.height, f.view);
+                             VK::surface.extent.height, {f.view});
     }
 
     commandPool = VK::createCommandPool(VK::device, VK::queues);
@@ -147,13 +147,13 @@ void RenderEngine::exit() {
     vkDestroySemaphore(VK::device, renderFinishedSemaphores, nullptr);
     vkDestroySemaphore(VK::device, imageAvailableSemaphores, nullptr);
 
-    for (const auto& f: VK::surface.swapchain.frames) {
+    for (auto& f: VK::surface.swapchain.frames) {
         f.framebuffer.destroy();
     }
 
     VK::surface.destroy();
     VK::deleteCommandPool(VK::device, commandPool);
-    VK::renderPass.deleteRenderPass(VK::device, renderPass);
+    VK::renderPass.destroy();
     VK::pipeline.deletePipelineLayout(VK::device, pipelineLayout);
     VK::pipeline.deletePipeline(VK::device, pipeline);
     VK::surface.destroy();
@@ -167,7 +167,7 @@ void RenderEngine::window_create(int width, int height, const char* title) {
 
     VK::window = glfwCreateWindow(width, height, title, nullptr, nullptr);
     //glfwSetWindowUserPointer(window, this);
-    glfwSetFramebufferSizeCallback(window, window_callback_resize);
+    //glfwSetFramebufferSizeCallback(window, window_callback_resize);
 }
 
 void RenderEngine::window_callback_resize(GLFWwindow* window, int width, int height) {

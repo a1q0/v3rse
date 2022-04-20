@@ -6,6 +6,7 @@ class App {
 public:
     void run() {
         RenderEngine::init();
+
         //RenderEngine::loop();
 
         //exit();

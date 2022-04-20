@@ -77,8 +77,7 @@ namespace VK {
         VkExtent2D extent {};
         VkImageView view {};
 
-        static force_inline VkImageView
-        createView(VkDevice vkDevice, VkImage image, VkFormat format, VkImageAspectFlags aspectFlags) {
+        force_inline VkImageView createView(VkImageAspectFlags aspectFlags) {
             VkImageViewCreateInfo vkImageViewCreateInfo {
                 .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
                 .pNext = nullptr,
@@ -101,9 +100,7 @@ namespace VK {
                 }
             };
 
-            VkImageView imageView;
-            vkCreateImageView(vkDevice, &vkImageViewCreateInfo, nullptr, &imageView);
-            return imageView;
+            vkCreateImageView(VK::device, &vkImageViewCreateInfo, nullptr, &view);
         }
 
 
@@ -320,21 +317,17 @@ namespace VK {
 
         VkExtent2D extent {};
 
-        force_inline VkSurfaceKHR createSurface(VkInstance vkInstance, GLFWwindow* window) {
-            VkWin32SurfaceCreateInfoKHR vkCreateInfo = {};
-            vkCreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-            vkCreateInfo.hwnd = glfwGetWin32Window(window);
-            vkCreateInfo.hinstance = GetModuleHandle(nullptr);
+        force_inline void create() {
+            VkWin32SurfaceCreateInfoKHR vkCreateInfo = {
+                .sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
+                .pNext{},
+                .flags{},
+                .hinstance = GetModuleHandle(nullptr),
+                .hwnd = glfwGetWin32Window(VK::window)
+            };
 
             /*if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) { throw std::runtime_error("failed to create window surface!"); }*/
-            VkSurfaceKHR vkSurface;
-            vkCreateWin32SurfaceKHR(vkInstance, &vkCreateInfo, nullptr, &vkSurface);
-
-            return vkSurface;
-        }
-
-        force_inline VkSurfaceKHR create() {
-            return createSurface(VK::instance, VK::window);
+            vkCreateWin32SurfaceKHR(VK::instance, &vkCreateInfo, nullptr, &surface);
         }
 
         force_inline void destroy() const {
@@ -378,7 +371,6 @@ namespace VK {
         }
 
         force_inline VkPresentModeKHR chooseSwapPresentMode(VkPresentModeKHR mode = VK_PRESENT_MODE_MAILBOX_KHR) {
-
             for (const auto& availablePresentMode: presentModes) {
                 if (availablePresentMode == mode) {
                     return vkPresentMode = availablePresentMode;
@@ -411,7 +403,6 @@ namespace VK {
             chooseSwapSurfaceFormat();
             chooseSwapPresentMode();
             swapchain.surface = this;
-
         }
 
         struct Swapchain {
@@ -481,8 +472,7 @@ namespace VK {
                 frames.resize(count);
                 for (int i = 0; i < frames.size(); i++) {
                     frames[i].image = vkImages[i];
-                    frames[i].view = VK::Image::createView(VK::device, frames[i].image, frames[i].format,
-                                                           VK_IMAGE_ASPECT_COLOR_BIT);
+                    frames[i].createView(VK_IMAGE_ASPECT_COLOR_BIT);
                 }
             }
 
@@ -504,10 +494,10 @@ namespace VK {
     struct RenderPass {
         VkRenderPass renderPass;
 
-        force_inline void createRenderPass(VkFormat vkFormat) {
+        force_inline void createRenderPass() {
             VkAttachmentDescription colorAttachment {
                 .flags{},
-                .format = vkFormat,
+                .format = surface.swapchain.frames[0].format,
                 .samples = VK_SAMPLE_COUNT_1_BIT,
                 .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
                 .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
@@ -560,8 +550,8 @@ namespace VK {
             vkCreateRenderPass(VK::device, &renderPassInfo, nullptr, &renderPass);
         }
 
-        force_inline void deleteRenderPass(VkDevice vkDevice, VkRenderPass vkRenderPass) {
-            vkDestroyRenderPass(vkDevice, vkRenderPass, nullptr);
+        force_inline void destroy() {
+            vkDestroyRenderPass(VK::device, renderPass, nullptr);
         }
 
     } renderPass;
@@ -570,12 +560,12 @@ namespace VK {
         VkPipelineLayout layout;
         VkPipeline pipeline;
 
-        force_inline void createGraphicsPipeline(VkDevice vkDevice, VkExtent2D extent, VkRenderPass vkRenderPass) {
+        force_inline void createGraphicsPipeline() {
             auto vertShaderCode = readFile("dat/shaders/default.vert.glsl.spv");
             auto fragShaderCode = readFile("dat/shaders/default.frag.glsl.spv");
 
-            VkShaderModule vertShaderModule = createShaderModule(vkDevice, vertShaderCode);
-            VkShaderModule fragShaderModule = createShaderModule(vkDevice, fragShaderCode);
+            VkShaderModule vertShaderModule = createShaderModule(device, vertShaderCode);
+            VkShaderModule fragShaderModule = createShaderModule(device, fragShaderCode);
 
             VkPipelineShaderStageCreateInfo vertShaderStageInfo {};
             vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -614,15 +604,15 @@ namespace VK {
             VkViewport viewport {
                 .x = 0.0f,
                 .y = 0.0f,
-                .width = (float) extent.width,
-                .height = (float) extent.height,
+                .width = (float) surface.extent.width,
+                .height = (float) surface.extent.height,
                 .minDepth = 0.0f,
                 .maxDepth = 1.0f
             };
 
             VkRect2D scissor {
                 .offset = {0, 0},
-                .extent = extent
+                .extent = surface.extent
             };
 
             VkPipelineViewportStateCreateInfo viewportState {
@@ -703,7 +693,7 @@ namespace VK {
                 .pPushConstantRanges{},
             };
 
-            vkCreatePipelineLayout(vkDevice, &pipelineLayoutInfo, nullptr, &layout);
+            vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &layout);
 
             VkGraphicsPipelineCreateInfo pipelineCreateInfo {
                 .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
@@ -721,21 +711,17 @@ namespace VK {
                 .pColorBlendState = &colorBlending,
                 .pDynamicState{},
                 .layout = layout,
-                .renderPass = vkRenderPass,
+                .renderPass = renderPass.renderPass,
                 .subpass = 0,
                 .basePipelineHandle = VK_NULL_HANDLE,
                 .basePipelineIndex{}
             };
 
-            CHECK(vkCreateGraphicsPipelines(vkDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &pipeline),
+            CHECK(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &pipeline),
                   "failed to create graphics pipeline.");
 
-            vkDestroyShaderModule(vkDevice, fragShaderModule, nullptr);
-            vkDestroyShaderModule(vkDevice, vertShaderModule, nullptr);
-        }
-
-        force_inline VkPipeline createGraphicsPipeline() {
-            createGraphicsPipeline(device, surface.extent, renderPass.renderPass);
+            vkDestroyShaderModule(device, fragShaderModule, nullptr);
+            vkDestroyShaderModule(device, vertShaderModule, nullptr);
         }
 
         force_inline void deletePipelineLayout(VkDevice vkDevice, VkPipelineLayout vkPipelineLayout) {
